@@ -50,7 +50,6 @@ class EVLAConfig(object):
     def set_ant(self,ant):
         self.ant = ant
         # TODO parse antenna properties info here
-        # -- add to list?
 
     @staticmethod
     def parse_intents(intents):
@@ -307,6 +306,11 @@ class EVLAConfig(object):
                     subs += [SubBand(subBand,self,IFid,vdif=None),]
 
         return subs
+
+    def get_antennas():
+        """Return a list of antenna objects for this scan.  Not yet
+        implemented."""
+        pass
 
 class SubBand(object):
     """This class defines relevant info for real-time pulsar processing
