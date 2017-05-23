@@ -50,6 +50,9 @@ class EVLAConfig(object):
     def set_ant(self,ant):
         self.ant = ant
         # TODO parse antenna properties info here
+        # I suppose we need to read the antenna names from the VCI file
+        # and then derive the antenna properties from the antenna 
+        # properties table?
 
     @staticmethod
     def parse_intents(intents):
@@ -213,6 +216,14 @@ class EVLAConfig(object):
                 pass
         return nb
 
+    @property
+    def listOfStations(self):
+        return [str(s.name) for s in vci.listOfStations.station]
+
+    @property
+    def numAntenna(self):
+        return len(self.listOfStations)
+
     def get_sslo(self,IFid):
         """Return the SSLO frequency in MHz for the given IFid.  This will
         correspond to the edge of the baseband.  Uses IFid naming convention 
@@ -308,9 +319,16 @@ class EVLAConfig(object):
         return subs
 
     def get_antennas():
-        """Return a list of antenna objects for this scan.  Not yet
-        implemented."""
-        pass
+        """Return a list of antenna objects for this scan.  These will 
+        appear in the correct order relevant to the ordering of data 
+        in the BDF."""
+        # TODO check ordering.  Is sorting done by 'widarID' or 'name'
+        # or 'sid' (in listOfStations) in practice these seem to be similar.
+        ants = []
+        for a in self.ant.AntennaProperties:
+            if a.name in self.listOfStations:
+                ants += [Antenna(a),]
+        return sorted(ants, key=lambda a: a.widarID)
 
 class SubBand(object):
     """This class defines relevant info for real-time pulsar processing
@@ -344,8 +362,22 @@ class SubBand(object):
         self.receiver = config.get_receiver(IFid)
 
 class Antenna(object):
-    """Holds info about an antenna. not yet implemented."""
-    pass
+    """Holds info about an antenna, as described in the Antenna Properties
+    Table.  Initialize with the AntennaProperties xml element."""
+    # TODO should this be immutable (named tuple or similar?)
+
+    def __init__(self,antprop):
+        self.name = str(antprop.attrib['name'])
+        self.widarID = int(antprop.widarID)
+        self.pad = str(antprop.pad)
+        self.X = float(antprop.X)
+        self.Y = float(antprop.Y)
+        self.Z = float(antprop.Z)
+        self.offset = float(antprop.offset)
+
+    @property
+    def xyz(self):
+        return [self.X, self.Y, self.Z]
 
 # Test program
 if __name__ == "__main__":
