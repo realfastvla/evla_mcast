@@ -9,8 +9,8 @@ from .evla_config import EVLAConfig
 class Controller(object):
 
     def __init__(self):
-        self.obs_client = mcast_clients.ObsClient(self,use_configUrl=True)
-        self.vci_client = mcast_clients.VCIClient(self)
+        self.obs_client = mcast_clients.ObsClient(self)
+        self.ant_client = mcast_clients.AntClient(self)
         self.scans = {} # lists of scans per datasetId
         self.vci = {}
         self.ant = {}
