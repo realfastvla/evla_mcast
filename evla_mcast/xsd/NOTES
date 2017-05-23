@@ -1,0 +1,5 @@
+vci schema can be found at http://www.aoc.nrao.edu/asg/widar/schemata/vci/
+
+Obs, AntennaProperty, can be found at https://svn.aoc.nrao.edu/repos/EVLA/commons/trunk/src/main/xsd/observe/
+
+lxml.objectify.dump(instance) is helpful

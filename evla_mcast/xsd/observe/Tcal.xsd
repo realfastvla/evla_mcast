@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:element name="Tcal" >
+  <xs:complexType >
+    <xs:sequence>
+      <xs:element name="baseband" maxOccurs="unbounded">
+      <xs:complexType>
+	<xs:sequence>
+	<xs:element name="calValue" type="xs:float"/>
+	</xs:sequence>
+	<xs:attribute name="BBname" type="xs:string"/>
+        </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    <xs:attribute name="startTime" type="xs:double"/>
+    <xs:attribute name="antID" type="xs:string"/>
+    <xs:attribute name="dcs" type="xs:int" use="optional"/>
+    <xs:attribute name="refant" type="xs:boolean" use="optional"/>
+    <xs:attribute name="seq" type="xs:int" use="optional"/>
+  </xs:complexType>
+  </xs:element>
+
+</xs:schema>
