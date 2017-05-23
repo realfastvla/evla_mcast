@@ -79,7 +79,7 @@ class ObsClient(McastClient):
     be called if a controller exists.
     """
 
-    def __init__(self,controller=None,use_configUrl=False):
+    def __init__(self,controller=None,use_configUrl=True):
         McastClient.__init__(self,'239.192.3.2',53001,'obs')
         self.controller = controller
         self.use_configUrl = use_configUrl
@@ -104,46 +104,23 @@ class ObsClient(McastClient):
         if self.controller is not None:
             self.controller.add_obs(obs)
 
-class VCIClient(McastClient):
-    """Receives VCI and AntennaProperties XML.
+class AntClient(McastClient):
+    """Receives AntennaProperties XML.
     
-    If the controller input is given, the controller.add_vci(vci) method will
+    If the controller input is given, the controller.add_ant(ant) method will
     be called for every document received.
     """
 
     def __init__(self,controller=None):
-        McastClient.__init__(self,'239.192.3.1',53000,'vci')
+        McastClient.__init__(self,'239.192.3.1',53000,'ant')
         self.controller = controller
 
     def parse(self):
-
-        # VCI and AntennaProperties come via the same multicast channel
-        # for some reason.  First try parsing this as a VCI, then 
-        # try as an AntennaProperties doc.
-        result = None
-        for parser in (_vci_parser, _ant_parser):
-            try:
-                result = objectify.fromstring(self.read,parser=parser)
-            except etree.XMLSyntaxError:
-                pass
-
-        if result is None:
-            logging.info("read an unrecognized message, ignoring.")
-        else:
-            # Figure out which type of message we got
-            if hasattr(result, 'stationInputOutput'):
-                logging.info("read vci configId='%s'" % 
-                        result.attrib['configId'])
-                # TODO probably remove this since vci is not multicast now..
-                #if self.controller is not None:
-                #    self.controller.add_vci(result)
-            elif hasattr(result, 'AntennaProperties'):
-                logging.info("read ant datasetId='%s'" % 
-                        result.attrib['datasetId'])
-                if self.controller is not None:
-                    self.controller.add_ant(result)
-
-        logging.debug('VCI/Ant data structure:\n' + objectify.dump(result))
+        result = objectify.fromstring(self.read,parser=parser)
+        logging.info("read ant datasetId='%s'" % result.attrib['datasetId'])
+        if self.controller is not None:
+            self.controller.add_ant(result)
+        logging.debug('Ant data structure:\n' + objectify.dump(result))
 
 
 # This is how these would be used in a program.  Note that no controller
@@ -152,8 +129,8 @@ class VCIClient(McastClient):
 if __name__ == '__main__':
     logging.basicConfig(format="%(asctime)-15s %(levelname)8s %(message)s",
             level=logging.DEBUG)
-    vci_client = VCIClient()
-    obs_client = ObsClient(use_configUrl=True)
+    ant_client = AntClient()
+    obs_client = ObsClient()
     try:
         asyncore.loop()
     except KeyboardInterrupt:
