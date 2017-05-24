@@ -116,7 +116,7 @@ class AntClient(McastClient):
         self.controller = controller
 
     def parse(self):
-        result = objectify.fromstring(self.read,parser=parser)
+        result = objectify.fromstring(self.read,parser=_ant_parser)
         logging.info("read ant datasetId='%s'" % result.attrib['datasetId'])
         if self.controller is not None:
             self.controller.add_ant(result)
