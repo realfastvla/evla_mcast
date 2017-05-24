@@ -271,12 +271,12 @@ class EVLAConfig(object):
 
         return bbname
 
-    def get_subbands(self,only_vdif=True,match_ips=[]):
+    def get_subbands(self,only_vdif=False,match_ips=[]):
         """Return a list of SubBand objects for all matching subbands.
         Inputs:
 
           only_vdif: if True, return only subbands with VDIF output enabled.
-                     (default: True)
+                     (default: False)
                      
           match_ips: Only return subbands with VDIF output routed to one of
                      the specified IP addresses.  If empty, all subbands
@@ -293,9 +293,8 @@ class EVLAConfig(object):
 
         subs = []
 
-        # NOTE, assumes only one stationInputOutput .. is this legit?
         for baseBand in self.vci.stationInputOutput[0].baseBand:
-            swbbName = baseBand.swbbName
+            swbbName = str(baseBand.swbbName)
             IFid = self.swbbName_to_IFid(swbbName)
             for subBand in baseBand.subBand:
                 if len(match_ips) or only_vdif:
@@ -352,7 +351,7 @@ class SubBand(object):
         self.vdif = vdif
         # Note, all frequencies are in MHz here
         self.bw = 1e-6 * float(subBand.bw)
-        self.bb_center_freq = 1e-6 * subBand.centralFreq # within the baseband
+        self.bb_center_freq = 1e-6 * float(subBand.centralFreq) # within the baseband
         ## The (original) infamous frequency calculation, copied here
         ## for posterity:
         ##self.skyctrfreq = self.bandedge[bb] + 1e-6 * self.sideband[bb] * \
@@ -360,6 +359,40 @@ class SubBand(object):
         self.sky_center_freq = config.get_sslo(IFid) \
                 + config.get_sideband(IFid) * self.bb_center_freq
         self.receiver = config.get_receiver(IFid)
+
+        # Infomation about the correlations below here
+
+        # Note, this will fail if the subBand.pp elements are not 
+        # labelled with correct id attributes.  I belive this is 
+        # tested by CM.
+        npp = len(subBand.pp)
+        self.pp = [None,] * npp
+        for pp in subBand.pp: 
+            idx = int(pp.attrib['id'])-1
+            self.pp[idx] = str(subBand.pp.attrib['correlation'])
+        
+        # Number of channels is specified separately for each pp.  I 
+        # do not think it is allowed for this to vary, so we will make
+        # this a single value.
+        # TODO: Also look for CBE frequency integration?
+        self.spectralChannels = int(subBand.pp[0].attrib['spectralChannels'])
+
+        # Time resolution in seconds, two are specified.  The first is
+        # the time step coming out of the correlator HW.  The second is
+        # the final value recorded by the cbe.
+        # TODO this is not correct for binning mode, needs to incorporate
+        # the binning period.
+        self.hw_time_res = \
+                1e-6 * float(subBand.blbProdIntegration.attrib['minIntegTime'])\
+                * int(subBand.blbProdIntegration.attrib['ccIntegFactor']) \
+                * int(subBand.blbProdIntegration.attrib['ltaIntegFactor']) 
+        self.final_time_res = self.hw_time_res \
+                * int(subBand.blbProdIntegration.attrib['cbeIntegFactor'])
+
+    @property
+    def npp(self):
+        return len(self.pp)
+                 
 
 class Antenna(object):
     """Holds info about an antenna, as described in the Antenna Properties
