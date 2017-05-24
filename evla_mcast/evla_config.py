@@ -146,7 +146,8 @@ class EVLAConfig(object):
 
     @property
     def source(self):
-        return self.obs.name.translate(string.maketrans(' *','__'))
+        return self.obs.name
+#        return self.obs.name.translate(string.maketrans(' *','__'))  # "AttributeError: no such child: translate"
 
     @property
     def ra_deg(self):
@@ -318,7 +319,7 @@ class EVLAConfig(object):
 
         return subs
 
-    def get_antennas():
+    def get_antennas(self):
         """Return a list of antenna objects for this scan.  These will 
         appear in the correct order relevant to the ordering of data 
         in the BDF."""
