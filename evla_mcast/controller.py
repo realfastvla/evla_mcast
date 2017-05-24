@@ -4,7 +4,7 @@ import logging
 import asyncore
 
 from . import mcast_clients
-from .evla_config import EVLAConfig
+from .scan_config import ScanConfig
 
 class Controller(object):
 
@@ -24,7 +24,7 @@ class Controller(object):
     def add_obs(self,obs):
         dsid = obs.attrib['datasetId']
         cfgid = obs.attrib['configId']
-        config = EVLAConfig(obs=obs,vci=self.vci[cfgid])
+        config = ScanConfig(obs=obs,vci=self.vci[cfgid])
         if dsid not in self.scans.keys():
             self.scans[dsid] = []
         self.scans[dsid].append(config)

@@ -18,7 +18,7 @@ import string
 
 from . import angles
 
-class EVLAConfig(object):
+class ScanConfig(object):
     """This class defines a complete EVLA observing config, which in 
     practice means both a VCI document and OBS document have been 
     received.  Quantities relevant for pulsar processing are taken
@@ -339,7 +339,7 @@ class SubBand(object):
     
     Inputs:
         subBand: The VCI subBand element
-        config:  The original EVLAConfig object
+        config:  The original ScanConfig object
         vdif:    The summedArray.vdif VCI element (optional)
         IFid:    The IF identification (as in OBS xml)
     """
@@ -422,7 +422,7 @@ if __name__ == "__main__":
     print "Parsing vci='%s' obs='%s'" % (vcifile, obsfile)
     vci = vcixml_parser.parse(vcifile)
     obs = obsxml_parser.parse(obsfile)
-    config = EVLAConfig(vci=vci,obs=obs)
+    config = ScanConfig(vci=vci,obs=obs)
     print "Found these subbands:"
     for sub in config.get_subbands(only_vdif=False):
         print "  IFid=%s swindex=%d sbid=%d vdif=%s bw=%.1f freq=%.1f" % (
