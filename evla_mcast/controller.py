@@ -4,7 +4,7 @@ import logging
 import asyncore
 
 from . import mcast_clients
-from .evla_config import EVLAConfig
+from .scan_config import ScanConfig
 
 import rfpipe
 
@@ -26,12 +26,15 @@ class Controller(object):
     def add_obs(self,obs):
         dsid = obs.attrib['datasetId']
         cfgid = obs.attrib['configId']
-        config = EVLAConfig(obs=obs,vci=self.vci[cfgid])
+        config = ScanConfig(obs=obs,vci=self.vci[cfgid])
         if dsid not in self.scans.keys():
             self.scans[dsid] = []
+        if dsid in self.ant.keys():
+            config.set_ant(self.ant[dsid])
         self.scans[dsid].append(config)
         logging.info('got %s scan for %s.%d.%d' % (config.scan_intent,
             config.datasetId, config.scanNo, config.subscanNo))
+        self.handle_config(config)
 
     def add_vci(self,vci):
         self.vci[vci.attrib['configId']] = vci
@@ -39,30 +42,26 @@ class Controller(object):
     def add_ant(self,ant):
         self.ant[ant.attrib['datasetId']] = ant
 
+    def handle_config(self,config):
+        # Implement in derived class..
+        pass
+
 
 class realfast_controller(Controller):
 
-    def __init__(self):
+    def __init__(self, preffile=None, inprefs={}):
         super(realfast_controller, self).__init__()
+        self.preffile = preffile
+        self.inprefs = inprefs
 
-    def add_obs(self, obs):
+    def handle_config(self, config):
         """ Triggered when obs comes in.
         Downstream logic starts here.
         """
 
-        dsid = obs.attrib['datasetId']
-        cfgid = obs.attrib['configId']
-        config = EVLAConfig(obs=obs,vci=self.vci[cfgid])
-
-        if dsid not in self.scans.keys():
-            self.scans[dsid] = []
-        self.scans[dsid].append(config)
-        logging.info('got %s scan for %s.%d.%d' % (config.scan_intent,
-            config.datasetId, config.scanNo, config.subscanNo))
-
         meta = rfpipe.metadata.config_metadata(config)
         logging.info('{0}'.format(meta))
 
-        st = rfpipe.state.State(preffile='~/lustre_workdir/realfast.yml', inmeta=meta, inprefs={'nsegment':1, 'maxdm': 1000})
+        st = rfpipe.state.State(preffile=self.preffile, inmeta=meta, inprefs=self.inprefs)
 
         logging.info('{0}'.format(st))
