@@ -24,9 +24,10 @@ class ScanConfig(object):
     received.  Quantities relevant for pulsar processing are taken
     from the VCI and OBS and returned."""
 
-    def __init__(self, vci=None, obs=None):
+    def __init__(self, vci=None, obs=None, ant=None):
         self.set_vci(vci)
         self.set_obs(obs)
+        self.set_ant(ant)
 
     def has_vci(self):
         return self.vci is not None
