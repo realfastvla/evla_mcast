@@ -6,8 +6,6 @@ import asyncore
 from . import mcast_clients
 from .scan_config import ScanConfig
 
-import rfpipe
-
 class Controller(object):
 
     def __init__(self):
@@ -45,23 +43,3 @@ class Controller(object):
     def handle_config(self,config):
         # Implement in derived class..
         pass
-
-
-class realfast_controller(Controller):
-
-    def __init__(self, preffile=None, inprefs={}):
-        super(realfast_controller, self).__init__()
-        self.preffile = preffile
-        self.inprefs = inprefs
-
-    def handle_config(self, config):
-        """ Triggered when obs comes in.
-        Downstream logic starts here.
-        """
-
-        meta = rfpipe.metadata.config_metadata(config)
-        logging.info('{0}'.format(meta))
-
-        st = rfpipe.state.State(preffile=self.preffile, inmeta=meta, inprefs=self.inprefs)
-
-        logging.info('{0}'.format(st))
