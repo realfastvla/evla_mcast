@@ -41,7 +41,7 @@ class ScanConfig(object):
             if len(obs):
                 fant = open(ant, 'r')
                 ant = objectify.fromstring(fant.read(), parser=_ant_parser)
-        except FileNotFoundError:
+        except IOError:
             pass
 
         self.set_vci(vci)
