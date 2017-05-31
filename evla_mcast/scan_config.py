@@ -16,6 +16,7 @@
 import ast
 import string
 from lxml import objectify
+import logging
 
 from . import angles
 from .mcast_clients import _ant_parser, _vci_parser, _obs_parser
@@ -35,14 +36,17 @@ class ScanConfig(object):
             if len(obs):
                 fobs = open(obs, 'r')
                 obs = objectify.fromstring(fobs.read(), parser=_obs_parser)
+                logging.info('Parsed obs xml from file {0}'.format(obs))
             if len(vci):
                 fvci = open(vci, 'r')
                 vci = objectify.fromstring(fvci.read(), parser=_vci_parser)
+                logging.info('Parsed vci xml from file {0}'.format(obs))
             if len(obs):
                 fant = open(ant, 'r')
                 ant = objectify.fromstring(fant.read(), parser=_ant_parser)
+                logging.info('Parsed ant xml from file {0}'.format(obs))
         except (IOError, TypeError):
-            pass
+            logging.info('Assuming one or more input xml docs are already parsed')
 
         self.set_vci(vci)
         self.set_obs(obs)
@@ -54,8 +58,11 @@ class ScanConfig(object):
     def has_obs(self):
         return self.obs is not None
 
+    def has_ant(self):
+        return self.obs is not None
+
     def is_complete(self):
-        return self.has_vci() and self.has_obs()
+        return self.has_vci() and self.has_obs() and self.has_ant
 
     def set_vci(self,vci):
         self.vci = vci
@@ -310,7 +317,8 @@ class ScanConfig(object):
         if not self.is_complete():
             raise RuntimeError("Complete configuration not available: "  
                     + "has_vci=" + self.has_vci() 
-                    + " has_obs=" + self.has_obs())
+                    + " has_obs=" + self.has_obs()
+                    + " has_ant=" + self.has_ant())
 
         subs = []
 
