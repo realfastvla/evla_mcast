@@ -14,6 +14,9 @@ import asyncore, socket
 import urllib
 from lxml import etree, objectify
 
+import logging
+logger = logging.getLogger(__name__)
+
 _install_dir = os.path.abspath(os.path.dirname(__file__))
 _xsd_dir = os.path.join(_install_dir, 'xsd')
 
@@ -43,15 +46,15 @@ class McastClient(asyncore.dispatcher):
         self.socket.setsockopt(socket.IPPROTO_IP, 
                 socket.IP_ADD_MEMBERSHIP, mreq)
         self.read = None
-        logging.debug('%s listening on group=%s port=%d' % (self.name,
+        logger.debug('%s listening on group=%s port=%d' % (self.name,
             self.group, self.port))
 
     def handle_connect(self):
-        logging.debug('connect %s group=%s port=%d' % (self.name, 
+        logger.debug('connect %s group=%s port=%d' % (self.name, 
             self.group, self.port))
 
     def handle_close(self):
-        logging.debug('close %s group=%s port=%d' % (self.name, 
+        logger.debug('close %s group=%s port=%d' % (self.name, 
             self.group, self.port))
 
     def writeable(self):
@@ -59,14 +62,14 @@ class McastClient(asyncore.dispatcher):
 
     def handle_read(self):
         self.read = self.recv(100000)
-        logging.debug('read ' + self.name + ' ' + self.read)
+        logger.debug('read ' + self.name + ' ' + self.read)
         try:
             self.parse()
         except Exception as e:
-            logging.exception("error handling '%s' message" % self.name)
+            logger.exception("error handling '%s' message" % self.name)
 
     def handle_error(self, type, val, trace):
-        logging.error('unhandled exception: ' + repr(val))
+        logger.error('unhandled exception: ' + repr(val))
 
 class ObsClient(McastClient):
     """Receives Observation XML.
@@ -86,21 +89,21 @@ class ObsClient(McastClient):
 
     def parse(self):
         obs = objectify.fromstring(self.read,parser=_obs_parser)
-        logging.info("read obs configId='%s' seq=%s" % (obs.attrib['configId'],
+        logger.info("read obs configId='%s' seq=%s" % (obs.attrib['configId'],
             obs.attrib['seq']))
-        logging.debug('Obs data structure:\n' + objectify.dump(obs))
+        logger.debug('Obs data structure:\n' + objectify.dump(obs))
         if self.use_configUrl:
             url = obs.attrib['configUrl']
-            logging.info("retrieve vci from '%s'" % url)
+            logger.info("retrieve vci from '%s'" % url)
             try:
                 vciread = urllib.urlopen(url).read()
-                logging.debug('retrieved vci ' + vciread)
+                logger.debug('retrieved vci ' + vciread)
                 vci = objectify.fromstring(vciread,parser=_vci_parser)
-                logging.debug('VCI data structure:\n' + objectify.dump(vci))
+                logger.debug('VCI data structure:\n' + objectify.dump(vci))
                 if self.controller is not None:
                     self.controller.add_vci(vci)
             except Exception as e:
-                logging.exception("error retrieving VCI from '%s'" % url)
+                logger.exception("error retrieving VCI from '%s'" % url)
         if self.controller is not None:
             self.controller.add_obs(obs)
 
@@ -117,22 +120,22 @@ class AntClient(McastClient):
 
     def parse(self):
         result = objectify.fromstring(self.read,parser=_ant_parser)
-        logging.info("read ant datasetId='%s'" % result.attrib['datasetId'])
+        logger.info("read ant datasetId='%s'" % result.attrib['datasetId'])
         if self.controller is not None:
             self.controller.add_ant(result)
-        logging.debug('Ant data structure:\n' + objectify.dump(result))
+        logger.debug('Ant data structure:\n' + objectify.dump(result))
 
 
 # This is how these would be used in a program.  Note that no controller
 # is passed, so the only action taken here is to print log messages when
 # each XML document comes in.
 if __name__ == '__main__':
-    logging.basicConfig(format="%(asctime)-15s %(levelname)8s %(message)s",
-            level=logging.DEBUG)
+    logger.basicConfig(format="%(asctime)-15s %(levelname)8s %(message)s",
+            level=logger.DEBUG)
     ant_client = AntClient()
     obs_client = ObsClient()
     try:
         asyncore.loop()
     except KeyboardInterrupt:
         # Just exit without the trace barf on control-C
-        logging.info('got SIGINT, exiting')
+        logger.info('got SIGINT, exiting')

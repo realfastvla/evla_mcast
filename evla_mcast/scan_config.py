@@ -16,7 +16,10 @@
 import ast
 import string
 from lxml import objectify
+
 import logging
+logger = logging.getLogger(__name__)
+
 
 from . import angles
 from .mcast_clients import _ant_parser, _vci_parser, _obs_parser
@@ -36,17 +39,17 @@ class ScanConfig(object):
             if len(obs):
                 fobs = open(obs, 'r')
                 obs = objectify.fromstring(fobs.read(), parser=_obs_parser)
-                logging.info('Parsed obs xml from file {0}'.format(obs))
+                logger.info('Parsed obs xml from file {0}'.format(obs))
             if len(vci):
                 fvci = open(vci, 'r')
                 vci = objectify.fromstring(fvci.read(), parser=_vci_parser)
-                logging.info('Parsed vci xml from file {0}'.format(obs))
+                logger.info('Parsed vci xml from file {0}'.format(obs))
             if len(obs):
                 fant = open(ant, 'r')
                 ant = objectify.fromstring(fant.read(), parser=_ant_parser)
-                logging.info('Parsed ant xml from file {0}'.format(obs))
+                logger.info('Parsed ant xml from file {0}'.format(obs))
         except (IOError, TypeError):
-            logging.info('Assuming one or more input xml docs are already parsed')
+            logger.info('Assuming one or more input xml docs are already parsed')
 
         self.set_vci(vci)
         self.set_obs(obs)
