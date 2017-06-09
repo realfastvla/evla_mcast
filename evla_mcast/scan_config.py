@@ -55,17 +55,20 @@ class ScanConfig(object):
         self.set_obs(obs)
         self.set_ant(ant)
 
+    @property
     def has_vci(self):
         return self.vci is not None
 
+    @property
     def has_obs(self):
         return self.obs is not None
 
+    @property
     def has_ant(self):
-        return self.obs is not None
+        return self.ant is not None
 
     def is_complete(self):
-        return self.has_vci() and self.has_obs() and self.has_ant()
+        return self.has_vci and self.has_obs and self.has_ant
 
     def set_vci(self, vci):
         self.vci = vci
@@ -319,9 +322,9 @@ class ScanConfig(object):
         # TODO: raise an exception, or just return empty list?
         if not self.is_complete():
             raise RuntimeError("Complete configuration not available: "  
-                    + "has_vci=" + self.has_vci() 
-                    + " has_obs=" + self.has_obs()
-                    + " has_ant=" + self.has_ant())
+                    + "has_vci=" + self.has_vci
+                    + " has_obs=" + self.has_obs
+                    + " has_ant=" + self.has_ant)
 
         subs = []
 
