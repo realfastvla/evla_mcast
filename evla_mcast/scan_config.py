@@ -65,19 +65,19 @@ class ScanConfig(object):
         return self.obs is not None
 
     def is_complete(self):
-        return self.has_vci() and self.has_obs() and self.has_ant
+        return self.has_vci() and self.has_obs() and self.has_ant()
 
-    def set_vci(self,vci):
+    def set_vci(self, vci):
         self.vci = vci
 
-    def set_obs(self,obs):
+    def set_obs(self, obs):
         self.obs = obs
         if self.obs is None:
             self.intents = {}
         else:
             self.intents = self.parse_intents(obs.intent)
 
-    def set_ant(self,ant):
+    def set_ant(self, ant):
         self.ant = ant
         # TODO parse antenna properties info here
         # I suppose we need to read the antenna names from the VCI file
