@@ -17,6 +17,10 @@ import ast
 import string
 from lxml import objectify
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 from . import angles
 from .mcast_clients import _ant_parser, _vci_parser, _obs_parser
 
@@ -35,39 +39,48 @@ class ScanConfig(object):
             if len(obs):
                 fobs = open(obs, 'r')
                 obs = objectify.fromstring(fobs.read(), parser=_obs_parser)
+                logger.info('Parsed obs xml from file {0}'.format(obs))
             if len(vci):
                 fvci = open(vci, 'r')
                 vci = objectify.fromstring(fvci.read(), parser=_vci_parser)
+                logger.info('Parsed vci xml from file {0}'.format(obs))
             if len(obs):
                 fant = open(ant, 'r')
                 ant = objectify.fromstring(fant.read(), parser=_ant_parser)
+                logger.info('Parsed ant xml from file {0}'.format(obs))
         except (IOError, TypeError):
-            pass
+            logger.info('Assuming one or more input xml docs are already parsed')
 
         self.set_vci(vci)
         self.set_obs(obs)
         self.set_ant(ant)
 
+    @property
     def has_vci(self):
         return self.vci is not None
 
+    @property
     def has_obs(self):
         return self.obs is not None
 
-    def is_complete(self):
-        return self.has_vci() and self.has_obs()
+    @property
+    def has_ant(self):
+        return self.ant is not None
 
-    def set_vci(self,vci):
+    def is_complete(self):
+        return self.has_vci and self.has_obs and self.has_ant
+
+    def set_vci(self, vci):
         self.vci = vci
 
-    def set_obs(self,obs):
+    def set_obs(self, obs):
         self.obs = obs
         if self.obs is None:
             self.intents = {}
         else:
             self.intents = self.parse_intents(obs.intent)
 
-    def set_ant(self,ant):
+    def set_ant(self, ant):
         self.ant = ant
         # TODO parse antenna properties info here
         # I suppose we need to read the antenna names from the VCI file
@@ -309,8 +322,9 @@ class ScanConfig(object):
         # TODO: raise an exception, or just return empty list?
         if not self.is_complete():
             raise RuntimeError("Complete configuration not available: "  
-                    + "has_vci=" + self.has_vci() 
-                    + " has_obs=" + self.has_obs())
+                    + "has_vci=" + self.has_vci
+                    + " has_obs=" + self.has_obs
+                    + " has_ant=" + self.has_ant)
 
         subs = []
 
