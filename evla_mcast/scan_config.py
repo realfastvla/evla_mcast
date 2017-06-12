@@ -234,7 +234,8 @@ class ScanConfig(object):
         for baseBand in self.vci.stationInputOutput[0].baseBand:
             try:
                 if baseBand.binningPeriod is not None:
-                    bp[baseBand.swbbName] = baseBand.binningPeriod
+                    IFid = swbbName_to_IFid(baseBand.swbbName)
+                    bp[IFid] = baseBand.binningPeriod
             except AttributeError:
                 pass
         return bp
@@ -245,7 +246,8 @@ class ScanConfig(object):
         for baseBand in self.vci.stationInputOutput[0].baseBand:
             try:
                 if baseBand.phaseBinning[0].numBins is not None:
-                    nb[baseBand.swbbName] = baseBand.phaseBinning[0].numBins
+                    IFid = swbbName_to_IFid(baseBand.swbbName)
+                    nb[IFid] = baseBand.phaseBinning[0].numBins
             except AttributeError, IndexError:
                 pass
         return nb
@@ -415,14 +417,18 @@ class SubBand(object):
         # Time resolution in seconds, two are specified.  The first is
         # the time step coming out of the correlator HW.  The second is
         # the final value recorded by the cbe.
-        # TODO this is not correct for binning mode, needs to incorporate
-        # the binning period.
-        self.hw_time_res = \
-                1e-6 * float(subBand.polProducts.blbProdIntegration.attrib['minIntegTime'])\
-                * int(subBand.polProducts.blbProdIntegration.attrib['ccIntegFactor']) \
-                * int(subBand.polProducts.blbProdIntegration.attrib['ltaIntegFactor']) 
+        if IFid in config.binningPeriod.keys():
+            self.hw_time_res = \
+                    1e-6 * config.binningPeriod[IFid] \
+                    * int(subBand.polProducts.blbProdIntegration.attrib['ltaIntegFactor']) 
+        else:
+            self.hw_time_res = \
+                    1e-6 * float(subBand.polProducts.blbProdIntegration.attrib['minIntegTime'])\
+                    * int(subBand.polProducts.blbProdIntegration.attrib['ccIntegFactor']) \
+                    * int(subBand.polProducts.blbProdIntegration.attrib['ltaIntegFactor']) 
+
         self.final_time_res = self.hw_time_res \
-                * int(subBand.polProducts.blbProdIntegration.attrib['cbeIntegFactor'])
+                    * int(subBand.polProducts.blbProdIntegration.attrib['cbeIntegFactor'])
 
     @property
     def npp(self):
