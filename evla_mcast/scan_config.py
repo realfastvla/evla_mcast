@@ -51,6 +51,8 @@ class ScanConfig(object):
         except (IOError, TypeError):
             logger.info('Assuming one or more input xml docs are already parsed')
 
+        self.stopTime = None
+
         self.set_vci(vci)
         self.set_obs(obs)
         self.set_ant(ant)
@@ -106,12 +108,16 @@ class ScanConfig(object):
             return default
 
     @property
-    def Id(self):
+    def configId(self):
         return self.obs.attrib['configId']
 
     @property
     def datasetId(self):
         return self.obs.attrib['datasetId']
+
+    @property
+    def scanId(self):
+        return '%s.%d.%d' % (self.datasetId, self.scanNo, self.subscanNo)
 
     @property
     def scanNo(self):
