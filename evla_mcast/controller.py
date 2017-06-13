@@ -30,8 +30,20 @@ class Controller(object):
         if dsid in self.ant.keys():
             config.set_ant(self.ant[dsid])
         self.scans[dsid].append(config)
-        logging.info('got %s scan for %s.%d.%d' % (config.scan_intent,
-            config.datasetId, config.scanNo, config.subscanNo))
+        nscan = len(self.scans[dsid])
+        if nscan>1:
+            # Set the stop time of the previous scan to the start time
+            # of the new scan.  This implicitly assumes the list of
+            # scans is in time order.  We might want to add a sort
+            # to ensure this is true.  The only time things get confusing
+            # is at the start of an observation where two Obs docs
+            # come out ~simultaneously.
+            if self.scans[dsid][nscan-2].stopTime is not None:
+                logging.warning(
+                        'previous scan %s already has a stopTime' % (
+                            config.scanId))
+            self.scans[dsid][nscan-2].stopTime = config.startTime
+        logging.info('got %s scan for %s' % (config.scan_intent, config.scanId))
         self.handle_config(config)
 
     def add_vci(self,vci):
