@@ -67,9 +67,10 @@ class Controller(object):
         dsid = ant.attrib['datasetId']
         self.ant[dsid] = ant
         # Update anything in the queue that does not yet have antenna info
-        for scan in self.queued_scans[dsid]:
-            if not scan.has_ant: 
-                scan.set_ant(ant)
+        if dsid in self.queued_scans.keys():
+            for scan in self.queued_scans[dsid]:
+                if not scan.has_ant: 
+                    scan.set_ant(ant)
         # Handle any now-complete scans in the queue
         self.clean_queue(dsid)
 
@@ -77,6 +78,7 @@ class Controller(object):
         # Calls handle_config on any queued scans that now have complete
         # info available.  Moves these from the queue into the list of
         # already-handled scans.
+        if dsid not in self.queued_scans.keys(): return
         complete = [s for s in self.queued_scans[dsid] if s.is_complete()]
         for scan in complete:
             logging.info('handling complete scan %s' % scan.scanId)
