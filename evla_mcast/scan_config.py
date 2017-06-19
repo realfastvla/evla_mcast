@@ -30,9 +30,16 @@ class ScanConfig(object):
     received.  Quantities relevant for pulsar processing are taken
     from the VCI and OBS and returned."""
 
-    def __init__(self, vci=None, obs=None, ant=None):
+    def __init__(self, vci=None, obs=None, ant=None,
+            requires=['obs','vci','ant','stop']):
         """ Sets the documents for a given scan.
         vci, obs, and ant arguments accept filenames or parsed xml string.
+
+        The requires arguments is a list specifying which information is
+        required for the ScanConfig to be complete.  It can contain any
+        of 'obs', 'vci', 'ant' and 'stop'.  The default is for all 
+        four to be required.  When all requirements have been filled, 
+        ScanConfig.is_complete() will return True.
         """
 
         try:
@@ -53,6 +60,8 @@ class ScanConfig(object):
 
         self.stopTime = None
 
+        self.requires = requires
+
         self.set_vci(vci)
         self.set_obs(obs)
         self.set_ant(ant)
@@ -70,7 +79,15 @@ class ScanConfig(object):
         return self.ant is not None
 
     def is_complete(self):
-        return self.has_vci and self.has_obs and self.has_ant
+        if ('obs' in self.requires) and not self.has_obs:
+            return False
+        if ('vci' in self.requires) and not self.has_obs:
+            return False
+        if ('ant' in self.requires) and not self.has_ant:
+            return False
+        if ('stop' in self.requires) and self.stopTime is None:
+            return False
+        return True
 
     def set_vci(self, vci):
         self.vci = vci

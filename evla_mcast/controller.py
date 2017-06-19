@@ -11,9 +11,14 @@ class Controller(object):
     def __init__(self):
         self.obs_client = mcast_clients.ObsClient(self)
         self.ant_client = mcast_clients.AntClient(self)
-        self.scans = {} # lists of scans per datasetId
-        self.vci = {}
-        self.ant = {}
+        self.queued_scans = {}  # lists of scans per datasetId
+        self.handled_scans = {} # lists of scans per datasetId
+        self.vci = {} # key is configId
+        self.ant = {} # key is datasetId
+
+        # The required info before handle_config is called.
+        # Redefine in derived classes as needed
+        self.scans_require = ['obs','vci','ant','stop']
 
     def run(self):
         try:
@@ -24,33 +29,62 @@ class Controller(object):
     def add_obs(self,obs):
         dsid = obs.attrib['datasetId']
         cfgid = obs.attrib['configId']
-        config = ScanConfig(obs=obs,vci=self.vci[cfgid])
-        if dsid not in self.scans.keys():
-            self.scans[dsid] = []
+
+        # Generate the scan config object for this scan
+        config = ScanConfig(obs=obs, vci=self.vci[cfgid],
+                requires=self.scans_require)
+
+        # Init lists if they are not there
+        if dsid not in self.queued_scans.keys():
+            self.queued_scans[dsid] = []
+            self.handled_scans[dsid] = []
+
+        # Set the antenna info if we have it
         if dsid in self.ant.keys():
             config.set_ant(self.ant[dsid])
-        self.scans[dsid].append(config)
-        nscan = len(self.scans[dsid])
-        if nscan>1:
-            # Set the stop time of the previous scan to the start time
-            # of the new scan.  This implicitly assumes the list of
-            # scans is in time order.  We might want to add a sort
-            # to ensure this is true.  The only time things get confusing
-            # is at the start of an observation where two Obs docs
-            # come out ~simultaneously.
-            if self.scans[dsid][nscan-2].stopTime is not None:
-                logging.warning(
-                        'previous scan %s already has a stopTime' % (
-                            config.scanId))
-            self.scans[dsid][nscan-2].stopTime = config.startTime
-        logging.info('got %s scan for %s' % (config.scan_intent, config.scanId))
-        self.handle_config(config)
+
+        # Update the stop times of any queued scans that start 
+        # before this one.  Does it ever make sense to update the 
+        # already-handled scans?
+        for scan in self.queued_scans[dsid]:
+            if ((scan.startTime<config.startTime) and 
+                    ((scan.stopTime is None) 
+                        or (scan.stopTime>config.startTime))):
+                scan.stopTime = config.startTime
+
+        # Add the new scan to the queue
+        self.queued_scans[dsid].append(config)
+        logging.info('queued %s scan for %s' % (config.scan_intent, 
+            config.scanId))
+
+        # Handle any complete scans from queue
+        self.clean_queue(dsid)
 
     def add_vci(self,vci):
         self.vci[vci.attrib['configId']] = vci
 
     def add_ant(self,ant):
-        self.ant[ant.attrib['datasetId']] = ant
+        dsid = ant.attrib['datasetId']
+        self.ant[dsid] = ant
+        # Update anything in the queue that does not yet have antenna info
+        if dsid in self.queued_scans.keys():
+            for scan in self.queued_scans[dsid]:
+                if not scan.has_ant: 
+                    scan.set_ant(ant)
+        # Handle any now-complete scans in the queue
+        self.clean_queue(dsid)
+
+    def clean_queue(self,dsid):
+        # Calls handle_config on any queued scans that now have complete
+        # info available.  Moves these from the queue into the list of
+        # already-handled scans.
+        if dsid not in self.queued_scans.keys(): return
+        complete = [s for s in self.queued_scans[dsid] if s.is_complete()]
+        for scan in complete:
+            logging.info('handling complete scan %s' % scan.scanId)
+            self.handle_config(scan)
+            self.handled_scans[dsid].append(scan)
+            self.queued_scans[dsid].remove(scan)
 
     def handle_config(self,config):
         # Implement in derived class..
