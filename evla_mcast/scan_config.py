@@ -202,7 +202,7 @@ class ScanConfig(object):
 
     @property
     def source(self):
-        return self.obs.name
+        return str(self.obs.name)
 #        return self.obs.name.translate(string.maketrans(' *','__'))  # "AttributeError: no such child: translate"
 
     @property
