@@ -6,15 +6,23 @@ import asyncore
 from . import mcast_clients
 from .scan_config import ScanConfig
 
+class Dataset(object):
+    # This is a simple data structure class for keeping track of scans that 
+    # have run or are queued to run for a given dataset (subarray).
+    def __init__(self,datasetId):
+        self.datasetId = datasetId
+        self.queued = []   # List of queued ScanConfig objects
+        self.handled = []  # List of handled ScanConfig objects
+        self.ant = None    # The antenna property table
+        self.stopTime = None # Final end time of the SB, once known
+
 class Controller(object):
 
     def __init__(self):
         self.obs_client = mcast_clients.ObsClient(self)
         self.ant_client = mcast_clients.AntClient(self)
-        self.queued_scans = {}  # lists of scans per datasetId
-        self.handled_scans = {} # lists of scans per datasetId
-        self.vci = {} # key is configId
-        self.ant = {} # key is datasetId
+        self._datasets = {} # key is datasetId
+        self.vci = {}       # key is configId
 
         # The required info before handle_config is called.
         # Redefine in derived classes as needed
@@ -26,66 +34,103 @@ class Controller(object):
         except KeyboardInterrupt:
             logging.info('got SIGINT, exiting.')
 
+    def dataset(self,dsid):
+        if dsid not in self._datasets.keys():
+            self._datasets[dsid] = Dataset(dsid)
+        return self._datasets[dsid]
+
     def add_obs(self,obs):
         dsid = obs.attrib['datasetId']
         cfgid = obs.attrib['configId']
+        ds = self.dataset(dsid)
 
         # Generate the scan config object for this scan
         config = ScanConfig(obs=obs, vci=self.vci[cfgid],
                 requires=self.scans_require)
 
-        # Init lists if they are not there
-        if dsid not in self.queued_scans.keys():
-            self.queued_scans[dsid] = []
-            self.handled_scans[dsid] = []
-
         # Set the antenna info if we have it
-        if dsid in self.ant.keys():
-            config.set_ant(self.ant[dsid])
+        if ds.ant is not None: config.set_ant(ds.ant)
 
         # Update the stop times of any queued scans that start 
         # before this one.  Does it ever make sense to update the 
         # already-handled scans?
-        for scan in self.queued_scans[dsid]:
+        for scan in ds.queued:
             if ((scan.startTime<config.startTime) and 
                     ((scan.stopTime is None) 
                         or (scan.stopTime>config.startTime))):
                 scan.stopTime = config.startTime
 
-        # Add the new scan to the queue
-        self.queued_scans[dsid].append(config)
-        logging.info('queued %s scan for %s' % (config.scan_intent, 
-            config.scanId))
+        # The end of an SB is marked by a special Observation document
+        # with source name FINISH, and intent suppress_data=True.  Check
+        # for this here.  This scan does not produce any data, it just
+        # sets the end time of the previous scan, and triggers and final
+        # end-of-SB processing.
+        is_finish = (config.source == 'FINISH')
+
+        # Add the new scan to the queue, unless it's a FINISH
+        if not is_finish:
+            ds.queued.append(config)
+            logging.info('queued %s scan for %s' % (config.scan_intent, 
+                config.scanId))
 
         # Handle any complete scans from queue
-        self.clean_queue(dsid)
+        self.clean_queue(ds)
+
+        # If this was a finish scan, update the dataset stop time,
+        # call handle_finish() for any cleanup/etc actions, and then
+        # remove the dataset from the list.
+        # TODO: Apparently multiple FINISH scan messages sometimes happen.
+        # Figure out best way to deal with this.
+        if is_finish:
+            ds.stopTime = config.startTime
+            handle_finish(ds)
+            self._datasets.pop(ds.datasetId)
 
     def add_vci(self,vci):
         self.vci[vci.attrib['configId']] = vci
 
     def add_ant(self,ant):
         dsid = ant.attrib['datasetId']
-        self.ant[dsid] = ant
+        ds = self.dataset(dsid)
+        ds.ant = ant
         # Update anything in the queue that does not yet have antenna info
-        if dsid in self.queued_scans.keys():
-            for scan in self.queued_scans[dsid]:
-                if not scan.has_ant: 
-                    scan.set_ant(ant)
+        for scan in ds.queued:
+            if not scan.has_ant:
+                scan.set_ant(ant)
         # Handle any now-complete scans in the queue
-        self.clean_queue(dsid)
+        self.clean_queue(ds)
 
-    def clean_queue(self,dsid):
+    def clean_queue(self,ds):
         # Calls handle_config on any queued scans that now have complete
         # info available.  Moves these from the queue into the list of
         # already-handled scans.
-        if dsid not in self.queued_scans.keys(): return
-        complete = [s for s in self.queued_scans[dsid] if s.is_complete()]
+        complete = [s for s in ds.queued if s.is_complete()]
         for scan in complete:
             logging.info('handling complete scan %s' % scan.scanId)
             self.handle_config(scan)
-            self.handled_scans[dsid].append(scan)
-            self.queued_scans[dsid].remove(scan)
+            ds.handled.append(scan)
+            ds.queued.remove(scan)
+
+        # XXX for testing, remove:
+        for s in ds.queued:
+            logging.info('queued %s start=%.6f stop=%.6f' % (
+                s.scanId, s.startTime, 
+                s.stopTime if s.stopTime is not None else 0.0))
+        for s in ds.handled:
+            logging.info('handled %s start=%.6f stop=%.6f' % (
+                s.scanId, s.startTime, 
+                s.stopTime if s.stopTime is not None else 0.0))
 
     def handle_config(self,config):
-        # Implement in derived class..
+        # Implement in derived class.  This will be called with the
+        # ScanConfig object as argument every time a scan with complete
+        # metadata is received.
+        pass
+
+    def handle_finish(self,dataset):
+        # Implement in derived class.  This will be called with the
+        # Dataset object as an argument whenever the FINISH scan
+        # has been received.  The Dataset.stopTime attribute will 
+        # give the final end time of the SB (note, this can be earlier
+        # than some of the scan end times if there has been an abort).
         pass
