@@ -82,6 +82,7 @@ class Controller(object):
         # TODO: Apparently multiple FINISH scan messages sometimes happen.
         # Figure out best way to deal with this.
         if is_finish:
+            logging.info('finishing dataset %s' % ds.datasetId)
             ds.stopTime = config.startTime
             self.handle_finish(ds)
             self._datasets.pop(ds.datasetId)
