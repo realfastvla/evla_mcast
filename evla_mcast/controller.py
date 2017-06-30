@@ -83,7 +83,7 @@ class Controller(object):
         # Figure out best way to deal with this.
         if is_finish:
             ds.stopTime = config.startTime
-            handle_finish(ds)
+            self.handle_finish(ds)
             self._datasets.pop(ds.datasetId)
 
     def add_vci(self,vci):
