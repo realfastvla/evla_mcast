@@ -14,31 +14,30 @@
 # parameters as well.
 
 import ast
-import string
 from lxml import objectify
+
+from . import angles
+from .mcast_clients import _ant_parser, _vci_parser, _obs_parser
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-from . import angles
-from .mcast_clients import _ant_parser, _vci_parser, _obs_parser
-
 class ScanConfig(object):
-    """This class defines a complete EVLA observing config, which in 
-    practice means both a VCI document and OBS document have been 
+    """ This class defines a complete EVLA observing config,
+    which in practice means both a VCI document and OBS document have been
     received.  Quantities relevant for pulsar processing are taken
     from the VCI and OBS and returned."""
 
     def __init__(self, vci=None, obs=None, ant=None,
-            requires=['obs','vci','ant','stop']):
+                 requires=['obs', 'vci', 'ant', 'stop']):
         """ Sets the documents for a given scan.
         vci, obs, and ant arguments accept filenames or parsed xml string.
 
         The requires arguments is a list specifying which information is
         required for the ScanConfig to be complete.  It can contain any
-        of 'obs', 'vci', 'ant' and 'stop'.  The default is for all 
-        four to be required.  When all requirements have been filled, 
+        of 'obs', 'vci', 'ant' and 'stop'.  The default is for all
+        four to be required.  When all requirements have been filled,
         ScanConfig.is_complete() will return True.
         """
 
@@ -103,7 +102,7 @@ class ScanConfig(object):
         self.ant = ant
         # TODO parse antenna properties info here
         # I suppose we need to read the antenna names from the VCI file
-        # and then derive the antenna properties from the antenna 
+        # and then derive the antenna properties from the antenna
         # properties table?
 
     @staticmethod
@@ -118,7 +117,7 @@ class ScanConfig(object):
                 d[k] = v
         return d
 
-    def get_intent(self,key,default=None):
+    def get_intent(self, key, default=None):
         try:
             return self.intents[key]
         except KeyError:
@@ -146,51 +145,51 @@ class ScanConfig(object):
 
     @property
     def observer(self):
-        return self.get_intent("ObserverName","Unknown")
+        return self.get_intent("ObserverName", "Unknown")
 
     @property
     def projid(self):
-        return self.get_intent("ProjectID","Unknown")
+        return self.get_intent("ProjectID", "Unknown")
 
     @property
     def scan_intent(self):
-        return self.get_intent("ScanIntent","None")
+        return self.get_intent("ScanIntent", "None")
 
     @property
     def nchan(self):
-        return int(self.get_intent("PsrNumChan",32))
+        return int(self.get_intent("PsrNumChan", 32))
 
     @property
     def npol(self):
-        return int(self.get_intent("PsrNumPol",4))
+        return int(self.get_intent("PsrNumPol", 4))
 
     @property
     def foldtime(self):
-        return float(self.get_intent("PsrFoldIntTime",10.0))
+        return float(self.get_intent("PsrFoldIntTime", 10.0))
 
     @property
     def foldbins(self):
-        return int(self.get_intent("PsrFoldNumBins",2048))
+        return int(self.get_intent("PsrFoldNumBins", 2048))
 
     @property
     def timeres(self):
-        return float(self.get_intent("PsrSearchTimeRes",1e-3))
+        return float(self.get_intent("PsrSearchTimeRes", 1e-3))
 
     @property
     def nbitsout(self):
-        return int(self.get_intent("PsrSearchNumBits",8))
+        return int(self.get_intent("PsrSearchNumBits", 8))
 
     @property
     def searchdm(self):
-        return float(self.get_intent("PsrSearchDM",0.0))
+        return float(self.get_intent("PsrSearchDM", 0.0))
 
     @property
     def freqfac(self):
-        return float(self.get_intent("PsrSearchFreqFac",1))
+        return float(self.get_intent("PsrSearchFreqFac", 1))
 
     @property
     def parfile(self):
-        return self.get_intent("TempoFileName",None)
+        return self.get_intent("TempoFileName", None)
 
     @property
     def calfreq(self):
@@ -269,9 +268,9 @@ class ScanConfig(object):
         for baseBand in self.vci.stationInputOutput[0].baseBand:
             try:
                 if baseBand.phaseBinning[0].numBins is not None:
-                    IFid = swbbName_to_IFid(baseBand.swbbName)
+                    IFid = self.swbbName_to_IFid(baseBand.swbbName)
                     nb[IFid] = baseBand.phaseBinning[0].numBins
-            except AttributeError, IndexError:
+            except (AttributeError, IndexError):
                 pass
         return nb
 
@@ -283,24 +282,26 @@ class ScanConfig(object):
     def numAntenna(self):
         return len(self.listOfStations)
 
-    def get_sslo(self,IFid):
+    def get_sslo(self, IFid):
         """Return the SSLO frequency in MHz for the given IFid.  This will
-        correspond to the edge of the baseband.  Uses IFid naming convention 
+        correspond to the edge of the baseband.  Uses IFid naming convention
         as in OBS XML."""
+
         for sslo in self.obs.sslo:
             if sslo.attrib["IFid"] == IFid:
-                return sslo.freq # These are in MHz
+                return sslo.freq  # These are in MHz
         return None
 
-    def get_sideband(self,IFid):
+    def get_sideband(self, IFid):
         """Return the sideband sense (int; +1 or -1) for the given IFid.
         Uses IFid naming convention as in OBS XML."""
+
         for sslo in self.obs.sslo:
             if sslo.attrib["IFid"] == IFid:
-                return int(sslo.attrib["Sideband"]) # 1 or -1
+                return int(sslo.attrib["Sideband"])  # 1 or -1
         return None
 
-    def get_receiver(self,IFid):
+    def get_receiver(self, IFid):
         """Return the receiver name for the given IFid.
         Uses IFid naming convention as in OBS XML."""
         for sslo in self.obs.sslo:
@@ -311,8 +312,8 @@ class ScanConfig(object):
     @staticmethod
     def swbbName_to_IFid(swbbName):
         """Converts values found in the VCI baseBand.swbbName property to
-        matching values as used in the OBS sslo.IFid property. 
-        
+        matching values as used in the OBS sslo.IFid property.
+
         swbbNames are like AC_8BIT, A1C1_3BIT, etc.
         IFids are like AC, AC1, etc."""
 
@@ -330,13 +331,13 @@ class ScanConfig(object):
 
         return bbname
 
-    def get_subbands(self,only_vdif=False,match_ips=[]):
+    def get_subbands(self, only_vdif=False, match_ips=[]):
         """Return a list of SubBand objects for all matching subbands.
         Inputs:
 
           only_vdif: if True, return only subbands with VDIF output enabled.
                      (default: False)
-                     
+
           match_ips: Only return subbands with VDIF output routed to one of
                      the specified IP addresses.  If empty, all subbands
                      are returned.  non-empty match_ips implies only_vdif
@@ -346,10 +347,10 @@ class ScanConfig(object):
 
         # TODO: raise an exception, or just return empty list?
         if not self.is_complete():
-            raise RuntimeError("Complete configuration not available: "  
-                    + "has_vci=" + self.has_vci
-                    + " has_obs=" + self.has_obs
-                    + " has_ant=" + self.has_ant)
+            raise RuntimeError("Complete configuration not available: "
+                               + "has_vci=" + self.has_vci
+                               + " has_obs=" + self.has_obs
+                               + " has_ant=" + self.has_ant)
 
         subs = []
 
@@ -364,30 +365,31 @@ class ScanConfig(object):
                         vdif = summedArray.vdif
                         if vdif:
                             if len(match_ips):
-                                if (vdif.aDestIP in match_ips) or (vdif.bDestIP 
-                                        in match_ips):
+                                if (vdif.aDestIP in match_ips) or \
+                                   (vdif.bDestIP in match_ips):
                                     # IPs match, add to list
-                                    subs += [SubBand(subBand,self,IFid,vdif),]
+                                    subs += [SubBand(subBand, self, IFid, vdif), ]
                             else:
                                 # No IP list specified, keep all subbands
-                                subs += [SubBand(subBand,self,IFid,vdif),]
+                                subs += [SubBand(subBand, self, IFid, vdif), ]
                 else:
                     # No VDIF or IP list given, just keep everything
-                    subs += [SubBand(subBand,self,IFid,vdif=None),]
+                    subs += [SubBand(subBand, self, IFid, vdif=None), ]
 
         return subs
 
     def get_antennas(self):
-        """Return a list of antenna objects for this scan.  These will 
-        appear in the correct order relevant to the ordering of data 
+        """Return a list of antenna objects for this scan.  These will
+        appear in the correct order relevant to the ordering of data
         in the BDF."""
         # TODO check ordering.  Is sorting done by 'widarID' or 'name'
         # or 'sid' (in listOfStations) in practice these seem to be similar.
         ants = []
         for a in self.ant.AntennaProperties:
             if a.attrib["name"] in self.listOfStations:
-                ants += [Antenna(a),]
+                ants += [Antenna(a), ]
         return sorted(ants, key=lambda a: int(a.widarID))
+
 
 class SubBand(object):
     """This class defines relevant info for real-time pulsar processing
@@ -396,7 +398,7 @@ class SubBand(object):
     is calculated, this depends on the baseBand properties, and LO settings
     (the latter only available in the OBS XML document).  Note, all frequencies
     coming out of this class are in MHz.
-    
+
     Inputs:
         subBand: The VCI subBand element
         config:  The original ScanConfig object
@@ -417,21 +419,21 @@ class SubBand(object):
         ##self.skyctrfreq = self.bandedge[bb] + 1e-6 * self.sideband[bb] * \
         ##                  self.subbands[isub].centralFreq
         self.sky_center_freq = config.get_sslo(IFid) \
-                + config.get_sideband(IFid) * self.bb_center_freq
+                             + config.get_sideband(IFid) * self.bb_center_freq
         self.receiver = config.get_receiver(IFid)
 
         # Infomation about the correlations below here
 
-        # Note, this will fail if the subBand.pp elements are not 
-        # labelled with correct id attributes.  I belive this is 
+        # Note, this will fail if the subBand.pp elements are not
+        # labelled with correct id attributes.  I belive this is
         # tested by CM.
         npp = len(subBand.polProducts.pp)
-        self.pp = [None,] * npp
-        for pp in subBand.polProducts.pp: 
+        self.pp = [None, ] * npp
+        for pp in subBand.polProducts.pp:
             idx = int(pp.attrib['id'])-1
             self.pp[idx] = str(pp.attrib['correlation'])
-        
-        # Number of channels is specified separately for each pp.  I 
+
+        # Number of channels is specified separately for each pp.  I
         # do not think it is allowed for this to vary, so we will make
         # this a single value.
         # TODO: Also look for CBE frequency integration?
@@ -443,12 +445,12 @@ class SubBand(object):
         if IFid in config.binningPeriod.keys():
             self.hw_time_res = \
                     1e-6 * config.binningPeriod[IFid] \
-                    * int(subBand.polProducts.blbProdIntegration.attrib['ltaIntegFactor']) 
+                    * int(subBand.polProducts.blbProdIntegration.attrib['ltaIntegFactor'])
         else:
             self.hw_time_res = \
                     1e-6 * float(subBand.polProducts.blbProdIntegration.attrib['minIntegTime'])\
                     * int(subBand.polProducts.blbProdIntegration.attrib['ccIntegFactor']) \
-                    * int(subBand.polProducts.blbProdIntegration.attrib['ltaIntegFactor']) 
+                    * int(subBand.polProducts.blbProdIntegration.attrib['ltaIntegFactor'])
 
         self.final_time_res = self.hw_time_res \
                     * int(subBand.polProducts.blbProdIntegration.attrib['cbeIntegFactor'])
@@ -456,14 +458,14 @@ class SubBand(object):
     @property
     def npp(self):
         return len(self.pp)
-                 
+
 
 class Antenna(object):
     """Holds info about an antenna, as described in the Antenna Properties
     Table.  Initialize with the AntennaProperties xml element."""
     # TODO should this be immutable (named tuple or similar?)
 
-    def __init__(self,antprop):
+    def __init__(self, antprop):
         self.name = str(antprop.attrib['name'])
         self.widarID = int(antprop.widarID)
         self.pad = str(antprop.pad)
@@ -476,6 +478,7 @@ class Antenna(object):
     def xyz(self):
         return [self.X, self.Y, self.Z]
 
+
 # Test program
 if __name__ == "__main__":
     import sys
@@ -486,9 +489,9 @@ if __name__ == "__main__":
     print "Parsing vci='%s' obs='%s'" % (vcifile, obsfile)
     vci = vcixml_parser.parse(vcifile)
     obs = obsxml_parser.parse(obsfile)
-    config = ScanConfig(vci=vci,obs=obs)
+    config = ScanConfig(vci=vci, obs=obs)
     print "Found these subbands:"
     for sub in config.get_subbands(only_vdif=False):
         print "  IFid=%s swindex=%d sbid=%d vdif=%s bw=%.1f freq=%.1f" % (
-                sub.IFid, sub.swIndex, sub.sbid, sub.vdif is not None, 
+                sub.IFid, sub.swIndex, sub.sbid, sub.vdif is not None,
                 sub.bw, sub.sky_center_freq)
