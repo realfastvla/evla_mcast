@@ -41,21 +41,23 @@ class ScanConfig(object):
         ScanConfig.is_complete() will return True.
         """
 
-        try:
+        try:        
             if len(obs):
+                logger.info('Received obs doc')
                 fobs = open(obs, 'r')
                 obs = objectify.fromstring(fobs.read(), parser=_obs_parser)
-                logger.info('Parsed obs xml from file {0}'.format(obs))
+                logger.info('Added obs doc from file {0}'.format(obs))
             if len(vci):
+                logger.info('Received vci doc')
                 fvci = open(vci, 'r')
                 vci = objectify.fromstring(fvci.read(), parser=_vci_parser)
-                logger.info('Parsed vci xml from file {0}'.format(obs))
+                logger.info('Added vci doc from file {0}'.format(obs))
             if len(ant):
+                logger.info('Received ant doc')
                 fant = open(ant, 'r')
                 ant = objectify.fromstring(fant.read(), parser=_ant_parser)
-                logger.info('Parsed ant xml from file {0}'.format(ant))
+                logger.info('Added ant doc from file {0}'.format(ant))
         except (IOError, TypeError) as exc:
-            logger.info('Error {0}'.format(exc))
             logger.info('Assuming one or more doc was already parsed')
 
         self.stopTime = None
@@ -65,9 +67,6 @@ class ScanConfig(object):
         self.set_vci(vci)
         self.set_obs(obs)
         self.set_ant(ant)
-
-        logger.info('Docs: (vci, obs, ant): ({0}, {1}, {2})'
-                    .format(type(type(vci), type(obs), type(ant))))
 
 
     @property
