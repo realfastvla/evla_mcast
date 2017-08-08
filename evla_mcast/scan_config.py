@@ -54,8 +54,9 @@ class ScanConfig(object):
                 fant = open(ant, 'r')
                 ant = objectify.fromstring(fant.read(), parser=_ant_parser)
                 logger.info('Parsed ant xml from file {0}'.format(ant))
-        except (IOError, TypeError):
-            logger.info('Assuming one or more input xml docs are already parsed')
+        except (IOError, TypeError) as exc:
+            logger.info('Error {0}'.format(exc))
+            logger.info('Assuming one or more doc was already parsed')
 
         self.stopTime = None
 
@@ -64,6 +65,10 @@ class ScanConfig(object):
         self.set_vci(vci)
         self.set_obs(obs)
         self.set_ant(ant)
+
+        logger.info('Docs: (vci, obs, ant): ({0}, {1}, {2})'
+                    .format(type(type(vci), type(obs), type(ant))))
+
 
     @property
     def has_vci(self):
