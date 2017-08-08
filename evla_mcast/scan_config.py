@@ -50,10 +50,10 @@ class ScanConfig(object):
                 fvci = open(vci, 'r')
                 vci = objectify.fromstring(fvci.read(), parser=_vci_parser)
                 logger.info('Parsed vci xml from file {0}'.format(obs))
-            if len(obs):
+            if len(ant):
                 fant = open(ant, 'r')
                 ant = objectify.fromstring(fant.read(), parser=_ant_parser)
-                logger.info('Parsed ant xml from file {0}'.format(obs))
+                logger.info('Parsed ant xml from file {0}'.format(ant))
         except (IOError, TypeError):
             logger.info('Assuming one or more input xml docs are already parsed')
 
