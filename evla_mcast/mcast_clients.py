@@ -4,13 +4,14 @@
 #
 # Based on code originally in async_mcast.py by PD and S. Ransom
 #
-# These classes set up networking, and parse incoming Obs and VCI 
+# These classes set up networking, and parse incoming Obs and VCI
 # documents into appropriate data structures.
 
 import os
 import struct
 import logging
-import asyncore, socket
+import asyncore
+import socket
 import urllib
 from lxml import etree, objectify
 
@@ -20,13 +21,13 @@ logger = logging.getLogger(__name__)
 _install_dir = os.path.abspath(os.path.dirname(__file__))
 _xsd_dir = os.path.join(_install_dir, 'xsd')
 
-_obs_xsd = os.path.join(_xsd_dir,'observe','Observation.xsd')
+_obs_xsd = os.path.join(_xsd_dir, 'observe', 'Observation.xsd')
 _obs_parser = objectify.makeparser(schema=etree.XMLSchema(file=_obs_xsd))
 
-_vci_xsd = os.path.join(_xsd_dir,'vci','vciRequest.xsd')
+_vci_xsd = os.path.join(_xsd_dir, 'vci', 'vciRequest.xsd')
 _vci_parser = objectify.makeparser(schema=etree.XMLSchema(file=_vci_xsd))
 
-_ant_xsd = os.path.join(_xsd_dir,'observe','AntennaPropertyTable.xsd')
+_ant_xsd = os.path.join(_xsd_dir, 'observe', 'AntennaPropertyTable.xsd')
 _ant_parser = objectify.makeparser(schema=etree.XMLSchema(file=_ant_xsd))
 
 class McastClient(asyncore.dispatcher):
@@ -71,6 +72,7 @@ class McastClient(asyncore.dispatcher):
     def handle_error(self, type, val, trace):
         logger.error('unhandled exception: ' + repr(val))
 
+
 class ObsClient(McastClient):
     """Receives Observation XML.
 
@@ -82,48 +84,54 @@ class ObsClient(McastClient):
     be called if a controller exists.
     """
 
-    def __init__(self,controller=None,use_configUrl=True):
-        McastClient.__init__(self,'239.192.3.2',53001,'obs')
+    def __init__(self, controller=None, use_configUrl=True):
+        McastClient.__init__(self, '239.192.3.2', 53001, 'obs')
         self.controller = controller
         self.use_configUrl = use_configUrl
 
     def parse(self):
-        obs = objectify.fromstring(self.read,parser=_obs_parser)
-        logger.info("read obs configId='%s' seq=%s" % (obs.attrib['configId'],
-            obs.attrib['seq']))
+        obs = objectify.fromstring(self.read, parser=_obs_parser)
+        logger.info("Read obs configId={0}, seq={1}"
+                    .format(obs.attrib['configId'], obs.attrib['seq']))
         logger.debug('Obs data structure:\n' + objectify.dump(obs))
+
         if self.use_configUrl:
             url = obs.attrib['configUrl']
-            logger.info("retrieve vci from '%s'" % url)
+            logger.info("Retrieving vci from {0}".format(url))
             try:
                 vciread = urllib.urlopen(url).read()
-                logger.debug('retrieved vci ' + vciread)
-                vci = objectify.fromstring(vciread,parser=_vci_parser)
+                logger.debug('Retrieved vci {0}'.format(vciread))
+                vci = objectify.fromstring(vciread, parser=_vci_parser)
                 logger.debug('VCI data structure:\n' + objectify.dump(vci))
                 if self.controller is not None:
                     self.controller.add_vci(vci)
             except Exception as e:
-                logger.exception("error retrieving VCI from '%s'" % url)
+                logger.exception("Error retrieving VCI from {0}. {1}"
+                                 .format(url, e))
+
         if self.controller is not None:
             self.controller.add_obs(obs)
 
+
 class AntClient(McastClient):
     """Receives AntennaProperties XML.
-    
+
     If the controller input is given, the controller.add_ant(ant) method will
     be called for every document received.
     """
 
-    def __init__(self,controller=None):
-        McastClient.__init__(self,'239.192.3.1',53000,'ant')
+    def __init__(self, controller=None):
+        McastClient.__init__(self, '239.192.3.1', 53000, 'ant')
         self.controller = controller
 
     def parse(self):
-        result = objectify.fromstring(self.read,parser=_ant_parser)
-        logger.info("read ant datasetId='%s'" % result.attrib['datasetId'])
+        result = objectify.fromstring(self.read, parser=_ant_parser)
+        logger.info("Read ant datasetId={0}"
+                    .format(result.attrib['datasetId']))
+
         if self.controller is not None:
             self.controller.add_ant(result)
-        logger.debug('Ant data structure:\n' + objectify.dump(result))
+        logger.debug('Ant data structure:\n{0}'.format(objectify.dump(result)))
 
 
 # This is how these would be used in a program.  Note that no controller
@@ -131,7 +139,7 @@ class AntClient(McastClient):
 # each XML document comes in.
 if __name__ == '__main__':
     logger.basicConfig(format="%(asctime)-15s %(levelname)8s %(message)s",
-            level=logger.DEBUG)
+                       level=logger.DEBUG)
     ant_client = AntClient()
     obs_client = ObsClient()
     try:
