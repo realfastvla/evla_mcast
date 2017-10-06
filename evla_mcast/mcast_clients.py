@@ -30,6 +30,7 @@ _vci_parser = objectify.makeparser(schema=etree.XMLSchema(file=_vci_xsd))
 _ant_xsd = os.path.join(_xsd_dir, 'observe', 'AntennaPropertyTable.xsd')
 _ant_parser = objectify.makeparser(schema=etree.XMLSchema(file=_ant_xsd))
 
+
 class McastClient(asyncore.dispatcher):
     """Generic class to receive the multicast XML docs."""
 
@@ -41,22 +42,21 @@ class McastClient(asyncore.dispatcher):
         addrinfo = socket.getaddrinfo(group, None)[0]
         self.create_socket(addrinfo[0], socket.SOCK_DGRAM)
         self.set_reuse_addr()
-        self.bind(('',port))
-        mreq = socket.inet_pton(addrinfo[0],addrinfo[4][0]) \
-                + struct.pack('=I', socket.INADDR_ANY)
-        self.socket.setsockopt(socket.IPPROTO_IP, 
-                socket.IP_ADD_MEMBERSHIP, mreq)
+        self.bind(('', port))
+        mreq = socket.inet_pton(addrinfo[0], addrinfo[4][0]) + struct.pack('=I', socket.INADDR_ANY)
+        self.socket.setsockopt(socket.IPPROTO_IP,
+                               socket.IP_ADD_MEMBERSHIP, mreq)
         self.read = None
         logger.debug('%s listening on group=%s port=%d' % (self.name,
-            self.group, self.port))
+                     self.group, self.port))
 
     def handle_connect(self):
-        logger.debug('connect %s group=%s port=%d' % (self.name, 
-            self.group, self.port))
+        logger.debug('connect %s group=%s port=%d' % (self.name,
+                     self.group, self.port))
 
     def handle_close(self):
-        logger.debug('close %s group=%s port=%d' % (self.name, 
-            self.group, self.port))
+        logger.debug('close %s group=%s port=%d' % (self.name,
+                     self.group, self.port))
 
     def writeable(self):
         return False
@@ -66,7 +66,7 @@ class McastClient(asyncore.dispatcher):
         logger.debug('read ' + self.name + ' ' + self.read)
         try:
             self.parse()
-        except Exception as e:
+        except Exception:
             logger.exception("error handling '%s' message" % self.name)
 
     def handle_error(self, type, val, trace):

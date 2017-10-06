@@ -68,6 +68,17 @@ class ScanConfig(object):
         self.set_obs(obs)
         self.set_ant(ant)
 
+    def __repr__(self):
+        defined = []
+        if self.has_obs:
+            defined.append('obs')
+        if self.has_ant:
+            defined.append('ant')
+        if self.has_vci:
+            defined.append('vci')
+        if self.stopTime:
+            defined.append('stop')
+        return 'ScanConfig with {0} defined'.format(defined)
 
     @property
     def has_vci(self):
