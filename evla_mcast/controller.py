@@ -35,7 +35,7 @@ class Controller(object):
         try:
             asyncore.loop()
         except KeyboardInterrupt:
-            logging.info('got SIGINT, exiting.')
+            logging.info('Exiting controller...')
 
     def dataset(self, dsid):
         if dsid not in self._datasets.keys():
@@ -74,8 +74,8 @@ class Controller(object):
         # Add the new scan to the queue, unless it's a FINISH
         if not is_finish:
             ds.queued.append(config)
-            logging.info('queued %s scan for %s' % (config.scan_intent,
-                         config.scanId))
+            logging.debug('Queued scan {0}, scan {1}.'
+                          .format(config.scan_intent, config.scanId))
 
         # Handle any complete scans from queue
         self.clean_queue(ds)
@@ -86,7 +86,7 @@ class Controller(object):
         # TODO: Apparently multiple FINISH scan messages sometimes happen.
         # Figure out best way to deal with this.
         if is_finish:
-            logging.info('finishing dataset %s' % ds.datasetId)
+            logging.debug('Finishing dataset {0}'.format(ds.datasetId))
             ds.stopTime = config.startTime
             self.handle_finish(ds)
             self._datasets.pop(ds.datasetId)
@@ -111,18 +111,18 @@ class Controller(object):
         # already-handled scans.
         complete = [s for s in ds.queued if s.is_complete()]
         for scan in complete:
-            logging.info('handling complete scan %s' % scan.scanId)
+            logging.debug('Handling complete scan {0}'.format(scan.scanId))
             self.handle_config(scan)
             ds.handled.append(scan)
             ds.queued.remove(scan)
 
         # XXX for testing, remove:
         for s in ds.queued:
-            logging.info('queued %s start=%.6f stop=%.6f' % (
+            logging.debug('Queued %s start=%.6f stop=%.6f' % (
                 s.scanId, s.startTime,
                 s.stopTime if s.stopTime is not None else 0.0))
         for s in ds.handled:
-            logging.info('handled %s start=%.6f stop=%.6f' % (
+            logging.debug('handled %s start=%.6f stop=%.6f' % (
                 s.scanId, s.startTime,
                 s.stopTime if s.stopTime is not None else 0.0))
 
