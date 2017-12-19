@@ -15,6 +15,7 @@
 
 import ast
 from lxml import objectify
+import os.path
 
 from . import angles
 from .mcast_clients import _ant_parser, _vci_parser, _obs_parser
@@ -362,10 +363,9 @@ class ScanConfig(object):
 
         # TODO: raise an exception, or just return empty list?
         if not self.is_complete():
-            raise RuntimeError("Complete configuration not available: "
-                               + "has_vci=" + self.has_vci
-                               + " has_obs=" + self.has_obs
-                               + " has_ant=" + self.has_ant)
+            raise RuntimeError("Complete configuration not available:"
+                               + " has_vci={0}, has_obs={1}, has_ant={2}"
+                               .format(self.has_vci, self.has_obs, self.has_ant))
 
         subs = []
 
@@ -501,12 +501,12 @@ if __name__ == "__main__":
     import obsxml_parser
     vcifile = sys.argv[1]
     obsfile = sys.argv[2]
-    print "Parsing vci='%s' obs='%s'" % (vcifile, obsfile)
+    print("Parsing vci='%s' obs='%s'" % (vcifile, obsfile))
     vci = vcixml_parser.parse(vcifile)
     obs = obsxml_parser.parse(obsfile)
     config = ScanConfig(vci=vci, obs=obs)
-    print "Found these subbands:"
+    print("Found these subbands:")
     for sub in config.get_subbands(only_vdif=False):
-        print "  IFid=%s swindex=%d sbid=%d vdif=%s bw=%.1f freq=%.1f" % (
+        print("  IFid=%s swindex=%d sbid=%d vdif=%s bw=%.1f freq=%.1f" % (
                 sub.IFid, sub.swIndex, sub.sbid, sub.vdif is not None,
-                sub.bw, sub.sky_center_freq)
+                sub.bw, sub.sky_center_freq))
