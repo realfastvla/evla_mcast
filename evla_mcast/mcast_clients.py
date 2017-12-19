@@ -13,6 +13,7 @@ import logging
 import asyncore
 import socket
 import urllib
+import contextlib
 from lxml import etree, objectify
 
 import logging
@@ -99,7 +100,8 @@ class ObsClient(McastClient):
             url = obs.attrib['configUrl']
             logger.info("Retrieving vci from {0}".format(url))
             try:
-                vciread = urllib.urlopen(url).read()
+                with contextlib.closing(urllib.urlopen(url)) as uo:
+                    vciread = uo.read()
                 logger.debug('Retrieved vci {0}'.format(vciread))
                 vci = objectify.fromstring(vciread, parser=_vci_parser)
                 logger.debug('VCI data structure:\n' + objectify.dump(vci))
