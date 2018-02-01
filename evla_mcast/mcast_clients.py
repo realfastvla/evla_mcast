@@ -108,8 +108,8 @@ class ObsClient(McastClient):
                 if self.controller is not None:
                     self.controller.add_vci(vci)
             except Exception as e:
-                logger.exception("Error retrieving VCI from {0}. {1}"
-                                 .format(url, e))
+                logger.warn("Error retrieving VCI from {0}. {1}"
+                            .format(url, e))
 
         if self.controller is not None:
             self.controller.add_obs(obs)
