@@ -44,22 +44,22 @@ class ScanConfig(object):
 
         try:        
             if len(obs):
-                logger.info('Received obs doc')
+                logger.debug('Received obs doc')
                 with open(obs, 'r') as fobs:
                     obs = objectify.fromstring(fobs.read(), parser=_obs_parser)
                 logger.info('Added obs doc from file {0}'.format(obs))
             if len(vci):
-                logger.info('Received vci doc')
+                logger.debug('Received vci doc')
                 with open(vci, 'r') as fvci:
                     vci = objectify.fromstring(fvci.read(), parser=_vci_parser)
                 logger.info('Added vci doc from file {0}'.format(obs))
             if len(ant):
-                logger.info('Received ant doc')
+                logger.debug('Received ant doc')
                 with open(ant, 'r') as fant:
                     ant = objectify.fromstring(fant.read(), parser=_ant_parser)
                 logger.info('Added ant doc from file {0}'.format(ant))
-        except (IOError, TypeError) as exc:
-            logger.info('Assuming one or more doc was already parsed')
+        except (IOError, TypeError):
+            logger.debug('Assuming one or more doc was already parsed')
 
         self.stopTime = None
 
