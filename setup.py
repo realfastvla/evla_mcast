@@ -1,13 +1,12 @@
 #!/usr/bin/env python
-
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 setup(name='evla_mcast',
-      version='0.0',
+      version='0.1',
       description='Receive and handle EVLA multicast messages',
       author='Paul Demorest',
       author_email='pdemores@nrao.edu',
-      url='http://github.com/demorest/evla_mcast',
-      packages=['evla_mcast'],
+      url='https://github.com/demorest/evla_mcast/',
+      packages=find_packages(exclude=('tests',)),
       package_data={'evla_mcast': ['xsd/*.xsd','xsd/vci/*.xsd','xsd/observe/*.xsd']},
      )
