@@ -8,5 +8,6 @@ setup(name='evla_mcast',
       author_email='pdemores@nrao.edu',
       url='https://github.com/demorest/evla_mcast/',
       packages=find_packages(exclude=('tests',)),
+      requires=['lxml'],
       package_data={'evla_mcast': ['xsd/*.xsd','xsd/vci/*.xsd','xsd/observe/*.xsd']},
      )
