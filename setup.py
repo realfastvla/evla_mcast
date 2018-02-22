@@ -7,7 +7,7 @@ setup(name='evla_mcast',
       author='Paul Demorest',
       author_email='pdemores@nrao.edu',
       url='https://github.com/demorest/evla_mcast/',
+      install_requires=['lxml'],
       packages=find_packages(exclude=('tests',)),
-      requires=['lxml'],
       package_data={'evla_mcast': ['xsd/*.xsd','xsd/vci/*.xsd','xsd/observe/*.xsd']},
      )
