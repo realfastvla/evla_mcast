@@ -1,11 +1,6 @@
-#! /usr/bin/env python
-
-# mcast_clients.py -- P. Demorest, 2015/02
-#
-# Based on code originally in async_mcast.py by PD and S. Ransom
-#
-# These classes set up networking, and parse incoming Obs and VCI
-# documents into appropriate data structures.
+from __future__ import print_function, division, absolute_import #, unicode_literals # not casa compatible
+from builtins import bytes, dict, object, range, map, input#, str # not casa compatible
+from future.utils import itervalues, viewitems, iteritems, listvalues, listitems
 
 import os
 import struct
@@ -31,6 +26,11 @@ _vci_parser = objectify.makeparser(schema=etree.XMLSchema(file=_vci_xsd))
 _ant_xsd = os.path.join(_xsd_dir, 'observe', 'AntennaPropertyTable.xsd')
 _ant_parser = objectify.makeparser(schema=etree.XMLSchema(file=_ant_xsd))
 
+
+# Based on code originally in async_mcast.py by PD and S. Ransom
+#
+# These classes set up networking, and parse incoming Obs and VCI
+# documents into appropriate data structures.
 
 class McastClient(asyncore.dispatcher):
     """Generic class to receive the multicast XML docs."""

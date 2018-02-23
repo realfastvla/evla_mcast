@@ -1,3 +1,7 @@
+from __future__ import print_function, division, absolute_import #, unicode_literals # not casa compatible
+from builtins import bytes, dict, object, range, map, input#, str # not casa compatible
+from future.utils import itervalues, viewitems, iteritems, listvalues, listitems
+
 # -*- coding:utf-8 -*-
 """Classes for representing angles, and positions on a unit sphere.
 

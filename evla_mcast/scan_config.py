@@ -1,17 +1,6 @@
-#! /usr/bin/env python
-
-# evla_config.py -- P. Demorest, 2015/02
-#
-# Code heavily based on earlier psrinfo_mcast.py by PD and S. Ransom.
-#
-# The main point of this part of the code is to take information from
-# the vci and obs data structures (which are a literal parsing of the XML
-# documents) and return relevant information in a more directly usable
-# form for pulsar processing.  This includes picking out subbands that
-# are configured to send VDIF to certain IP addresses, and performing
-# the relevant sky frequency calculations for each.  Pulsar-related
-# intents in the obs XML are parsed to recover the requested processing
-# parameters as well.
+from __future__ import print_function, division, absolute_import #, unicode_literals # not casa compatible
+from builtins import bytes, dict, object, range, map, input#, str # not casa compatible
+from future.utils import itervalues, viewitems, iteritems, listvalues, listitems
 
 import ast
 from lxml import objectify
@@ -22,6 +11,17 @@ from .mcast_clients import _ant_parser, _vci_parser, _obs_parser
 
 import logging
 logger = logging.getLogger(__name__)
+
+# Code heavily based on earlier psrinfo_mcast.py by PD and S. Ransom.
+#
+# The main point of this part of the code is to take information from
+# the vci and obs data structures (which are a literal parsing of the XML
+# documents) and return relevant information in a more directly usable
+# form for pulsar processing.  This includes picking out subbands that
+# are configured to send VDIF to certain IP addresses, and performing
+# the relevant sky frequency calculations for each.  Pulsar-related
+# intents in the obs XML are parsed to recover the requested processing
+# parameters as well.
 
 
 class ScanConfig(object):
