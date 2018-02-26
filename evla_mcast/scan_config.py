@@ -1,6 +1,7 @@
-from __future__ import print_function, division, absolute_import #, unicode_literals # not casa compatible
-from builtins import bytes, dict, object, range, map, input#, str # not casa compatible
+from __future__ import print_function, division, absolute_import, unicode_literals
+from builtins import bytes, dict, object, range, map, input, str
 from future.utils import itervalues, viewitems, iteritems, listvalues, listitems
+from io import open
 
 import ast
 from lxml import objectify
@@ -45,17 +46,17 @@ class ScanConfig(object):
         try:        
             if len(obs):
                 logger.debug('Received obs doc')
-                with open(obs, 'r') as fobs:
+                with open(obs, 'rb') as fobs:
                     obs = objectify.fromstring(fobs.read(), parser=_obs_parser)
                 logger.info('Added obs doc from file {0}'.format(obs))
             if len(vci):
                 logger.debug('Received vci doc')
-                with open(vci, 'r') as fvci:
+                with open(vci, 'rb') as fvci:
                     vci = objectify.fromstring(fvci.read(), parser=_vci_parser)
                 logger.info('Added vci doc from file {0}'.format(obs))
             if len(ant):
                 logger.debug('Received ant doc')
-                with open(ant, 'r') as fant:
+                with open(ant, 'rb') as fant:
                     ant = objectify.fromstring(fant.read(), parser=_ant_parser)
                 logger.info('Added ant doc from file {0}'.format(ant))
         except (IOError, TypeError):
@@ -459,7 +460,7 @@ class SubBand(object):
         # Time resolution in seconds, two are specified.  The first is
         # the time step coming out of the correlator HW.  The second is
         # the final value recorded by the cbe.
-        if IFid in config.binningPeriod.keys():
+        if IFid in list(config.binningPeriod.keys()):
             self.hw_time_res = \
                     1e-6 * config.binningPeriod[IFid] \
                     * int(subBand.polProducts.blbProdIntegration.attrib['ltaIntegFactor'])

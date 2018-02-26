@@ -1,6 +1,7 @@
-from __future__ import print_function, division, absolute_import #, unicode_literals # not casa compatible
-from builtins import bytes, dict, object, range, map, input#, str # not casa compatible
+from __future__ import print_function, division, absolute_import, unicode_literals
+from builtins import bytes, dict, object, range, map, input, str
 from future.utils import itervalues, viewitems, iteritems, listvalues, listitems
+from io import open
 
 import logging
 import asyncore
@@ -40,7 +41,7 @@ class Controller(object):
             logging.info('Exiting controller...')
 
     def dataset(self, dsid):
-        if dsid not in self._datasets.keys():
+        if dsid not in list(self._datasets.keys()):
             self._datasets[dsid] = Dataset(dsid)
         return self._datasets[dsid]
 

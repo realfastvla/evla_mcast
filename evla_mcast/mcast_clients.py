@@ -1,13 +1,14 @@
-from __future__ import print_function, division, absolute_import #, unicode_literals # not casa compatible
-from builtins import bytes, dict, object, range, map, input#, str # not casa compatible
+from __future__ import print_function, division, absolute_import, unicode_literals
+from builtins import bytes, dict, object, range, map, input, str
 from future.utils import itervalues, viewitems, iteritems, listvalues, listitems
+from io import open
+from future.moves.urllib.request import urlopen
 
 import os
 import struct
 import logging
 import asyncore
 import socket
-import urllib
 import contextlib
 from lxml import etree, objectify
 
@@ -100,7 +101,7 @@ class ObsClient(McastClient):
             url = obs.attrib['configUrl']
             logger.info("Retrieving vci from {0}".format(url))
             try:
-                with contextlib.closing(urllib.urlopen(url)) as uo:
+                with contextlib.closing(urlopen(url)) as uo:
                     vciread = uo.read()
                 logger.debug('Retrieved vci {0}'.format(vciread))
                 vci = objectify.fromstring(vciread, parser=_vci_parser)
