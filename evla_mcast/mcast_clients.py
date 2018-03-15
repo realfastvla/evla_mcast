@@ -65,7 +65,7 @@ class McastClient(asyncore.dispatcher):
 
     def handle_read(self):
         self.read = self.recv(100000)
-        logger.debug('read ' + self.name + ' ' + self.read)
+        logger.debug('read ' + self.name + ' ' + self.read.decode('utf-8'))
         try:
             self.parse()
         except Exception:
