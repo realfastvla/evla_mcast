@@ -1,7 +1,18 @@
-#! /usr/bin/env python
+from __future__ import print_function, division, absolute_import, unicode_literals
+from builtins import bytes, dict, object, range, map, input, str
+from future.utils import itervalues, viewitems, iteritems, listvalues, listitems
+from io import open
 
-# evla_config.py -- P. Demorest, 2015/02
-#
+import ast
+from lxml import objectify
+import os.path
+
+from . import angles
+from .mcast_clients import _ant_parser, _vci_parser, _obs_parser
+
+import logging
+logger = logging.getLogger(__name__)
+
 # Code heavily based on earlier psrinfo_mcast.py by PD and S. Ransom.
 #
 # The main point of this part of the code is to take information from
@@ -12,15 +23,6 @@
 # the relevant sky frequency calculations for each.  Pulsar-related
 # intents in the obs XML are parsed to recover the requested processing
 # parameters as well.
-
-import ast
-from lxml import objectify
-
-from . import angles
-from .mcast_clients import _ant_parser, _vci_parser, _obs_parser
-
-import logging
-logger = logging.getLogger(__name__)
 
 
 class ScanConfig(object):
@@ -43,22 +45,22 @@ class ScanConfig(object):
 
         try:        
             if len(obs):
-                logger.info('Received obs doc')
-                fobs = open(obs, 'r')
-                obs = objectify.fromstring(fobs.read(), parser=_obs_parser)
+                logger.debug('Received obs doc')
+                with open(obs, 'rb') as fobs:
+                    obs = objectify.fromstring(fobs.read(), parser=_obs_parser)
                 logger.info('Added obs doc from file {0}'.format(obs))
             if len(vci):
-                logger.info('Received vci doc')
-                fvci = open(vci, 'r')
-                vci = objectify.fromstring(fvci.read(), parser=_vci_parser)
+                logger.debug('Received vci doc')
+                with open(vci, 'rb') as fvci:
+                    vci = objectify.fromstring(fvci.read(), parser=_vci_parser)
                 logger.info('Added vci doc from file {0}'.format(obs))
             if len(ant):
-                logger.info('Received ant doc')
-                fant = open(ant, 'r')
-                ant = objectify.fromstring(fant.read(), parser=_ant_parser)
+                logger.debug('Received ant doc')
+                with open(ant, 'rb') as fant:
+                    ant = objectify.fromstring(fant.read(), parser=_ant_parser)
                 logger.info('Added ant doc from file {0}'.format(ant))
-        except (IOError, TypeError) as exc:
-            logger.info('Assuming one or more doc was already parsed')
+        except (IOError, TypeError):
+            logger.debug('Assuming one or more doc was already parsed')
 
         self.stopTime = None
 
@@ -68,6 +70,17 @@ class ScanConfig(object):
         self.set_obs(obs)
         self.set_ant(ant)
 
+    def __repr__(self):
+        defined = []
+        if self.has_obs:
+            defined.append('obs')
+        if self.has_ant:
+            defined.append('ant')
+        if self.has_vci:
+            defined.append('vci')
+        if self.stopTime:
+            defined.append('stop')
+        return 'ScanConfig with {0} defined'.format(defined)
 
     @property
     def has_vci(self):
@@ -352,9 +365,10 @@ class ScanConfig(object):
         # TODO: raise an exception, or just return empty list?
         if not self.is_complete():
             raise RuntimeError("Complete configuration not available: "
-                               + "has_vci=" + self.has_vci
-                               + " has_obs=" + self.has_obs
-                               + " has_ant=" + self.has_ant)
+                               "has_vci={0}, has_obs={1}, has_ant={2}, "
+                               "stoptime={3}"
+                               .format(self.has_vci, self.has_obs,
+                                self.has_ant, self.stoptime))
 
         subs = []
 
@@ -446,7 +460,7 @@ class SubBand(object):
         # Time resolution in seconds, two are specified.  The first is
         # the time step coming out of the correlator HW.  The second is
         # the final value recorded by the cbe.
-        if IFid in config.binningPeriod.keys():
+        if IFid in list(config.binningPeriod.keys()):
             self.hw_time_res = \
                     1e-6 * config.binningPeriod[IFid] \
                     * int(subBand.polProducts.blbProdIntegration.attrib['ltaIntegFactor'])
@@ -490,12 +504,12 @@ if __name__ == "__main__":
     import obsxml_parser
     vcifile = sys.argv[1]
     obsfile = sys.argv[2]
-    print "Parsing vci='%s' obs='%s'" % (vcifile, obsfile)
+    print("Parsing vci='%s' obs='%s'" % (vcifile, obsfile))
     vci = vcixml_parser.parse(vcifile)
     obs = obsxml_parser.parse(obsfile)
     config = ScanConfig(vci=vci, obs=obs)
-    print "Found these subbands:"
+    print("Found these subbands:")
     for sub in config.get_subbands(only_vdif=False):
-        print "  IFid=%s swindex=%d sbid=%d vdif=%s bw=%.1f freq=%.1f" % (
+        print("  IFid=%s swindex=%d sbid=%d vdif=%s bw=%.1f freq=%.1f" % (
                 sub.IFid, sub.swIndex, sub.sbid, sub.vdif is not None,
-                sub.bw, sub.sky_center_freq)
+                sub.bw, sub.sky_center_freq))
