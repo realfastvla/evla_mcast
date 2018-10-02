@@ -268,6 +268,11 @@ class ScanConfig(object):
         return "VLA"
 
     @property
+    def baseBandNames(self):
+        return [str(baseBand.attrib['swbbName']) for baseBand 
+                in self.vci.stationInputOutput[0].baseBand]
+
+    @property
     def binningPeriod(self):
         bp = {}
         for baseBand in self.vci.stationInputOutput[0].baseBand:
