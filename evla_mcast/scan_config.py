@@ -173,6 +173,26 @@ class ScanConfig(object):
         return self.get_intent("ScanIntent", "None")
 
     @property
+    def otf(self):
+        return self.get_intent("OTF","0") == "1"
+
+    @property
+    def otf_rate_ra(self):
+        return float(self.get_intent("AntennaRaRate","0").strip('"'))
+
+    @property
+    def otf_rate_dec(self):
+        return float(self.get_intent("AntennaDecRate","0").strip('"'))
+
+    @property
+    def otf_duration(self):
+        return float(self.get_intent("DurationOfStripe","0").strip('"'))
+
+    @property
+    def otf_source_field(self):
+        return self.get_intent("SourceFieldSet","None").strip('"')
+
+    @property
     def nchan(self):
         return int(self.get_intent("PsrNumChan", 32))
 
