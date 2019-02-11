@@ -99,7 +99,7 @@ class ScanConfig(object):
     def is_complete(self):
         if ('obs' in self.requires) and not self.has_obs:
             return False
-        if ('vci' in self.requires) and not self.has_obs:
+        if ('vci' in self.requires) and not self.has_vci:
             return False
         if ('ant' in self.requires) and not self.has_ant:
             return False
