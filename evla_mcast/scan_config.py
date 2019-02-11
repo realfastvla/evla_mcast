@@ -66,6 +66,8 @@ class ScanConfig(object):
 
         self.requires = requires
 
+        self._subscans = []
+
         self.set_vci(vci)
         self.set_obs(obs)
         self.set_ant(ant)
@@ -107,6 +109,8 @@ class ScanConfig(object):
 
     def set_vci(self, vci):
         self.vci = vci
+        for ss in self._subscans:
+            ss.set_vci(vci)
 
     def set_obs(self, obs):
         self.obs = obs
@@ -117,10 +121,40 @@ class ScanConfig(object):
 
     def set_ant(self, ant):
         self.ant = ant
-        # TODO parse antenna properties info here
-        # I suppose we need to read the antenna names from the VCI file
-        # and then derive the antenna properties from the antenna
-        # properties table?
+        for ss in self._subscans:
+            ss.set_ant(ant)
+
+    def add_subscan(self, obs):
+        subconf = ScanConfig(obs=obs,vci=self.vci,ant=self.ant)
+
+        # TODO other stuff that could go here:
+        #  - check that subscan properties are consistent with main scan?
+
+        # Update stop times for all existing subscans in the list
+        for ss in [self,] + self._subscans:
+            if ((ss.startTime < subconf.startTime) and
+                    ((ss.stopTime is None)
+                        or (ss.stopTime > subconf.startTime))):
+                ss.stopTime = subconf.startTime
+
+        # Add new subscan to the list
+        self._subscans.append(subconf)
+
+    @property
+    def nsubscan(self):
+        return 1 + len(self._subscans)
+
+    @property
+    def subscans(self):
+        return [self.subscanNo,] + [c.subscanNo for c in self._subscans]
+
+    def subscan(self,subscanNo):
+        if subscanNo==self.subscanNo: 
+            return self
+        for sc in self._subscans:
+            if subscanNo==sc.subscanNo:
+                return sc
+        return None
 
     @staticmethod
     def parse_intents(intents):
