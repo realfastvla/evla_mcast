@@ -124,21 +124,38 @@ class ScanConfig(object):
         for ss in self._subscans:
             ss.set_ant(ant)
 
+    def is_subscan(self, config):
+        # Return true if config appears to be a subscan in the same set as
+        # this one.
+        return (
+                (self.datasetId == config.datasetId) and
+                (self.configId == config.configId) and
+                (self.scanNo == config.scanNo) and
+                (self.subscanNo != config.subscanNo)
+                )
+
     def add_subscan(self, obs):
         subconf = ScanConfig(obs=obs,vci=self.vci,ant=self.ant)
 
         # TODO other stuff that could go here:
         #  - check that subscan properties are consistent with main scan?
 
-        # Update stop times for all existing subscans in the list
-        for ss in [self,] + self._subscans:
-            if ((ss.startTime < subconf.startTime) and
-                    ((ss.stopTime is None)
-                        or (ss.stopTime > subconf.startTime))):
-                ss.stopTime = subconf.startTime
+        self.update_stopTime(subconf.startTime)
 
         # Add new subscan to the list
         self._subscans.append(subconf)
+
+    def update_stopTime(self, stopTime):
+        # Fill in any missing stop time info both for this scan and all
+        # subscans
+        was_updated = False
+        for ss in self.subscans:
+            if ((ss.startTime < stopTime) and
+                    ((ss.stopTime is None)
+                        or (ss.stopTime > stopTime))):
+                ss.stopTime = stopTime
+                was_updated = True
+        return was_updated
 
     @property
     def nsubscan(self):
@@ -146,9 +163,11 @@ class ScanConfig(object):
 
     @property
     def subscans(self):
-        return [self.subscanNo,] + [c.subscanNo for c in self._subscans]
+        # List of all subscans (including first subscan)
+        return [self,] + self._subscans
 
     def subscan(self,subscanNo):
+        # Get a specific subscan, by number
         if subscanNo==self.subscanNo: 
             return self
         for sc in self._subscans:

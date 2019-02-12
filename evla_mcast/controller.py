@@ -54,18 +54,36 @@ class Controller(object):
         config = ScanConfig(obs=obs, vci=self.vci[cfgid],
                             requires=self.scans_require)
 
+        # Chek whether this is a subscan of an existing scan, add it if so
+        is_subscan = False
+        for scan in ds.queued:
+            if scan.is_subscan(config):
+                is_subscan = True
+                scan.add_subscan(obs)
+                logging.debug('Added subscan {0} to queued scan {2}.'
+                              .format(config.subscanNo, scan.scanId))
+        for scan in ds.handled:
+            if scan.is_subscan(config):
+                is_subscan = True
+                scan.add_subscan(obs)
+                # If the scan is already complete, also handle subscan
+                self.handle_subscan(scan)
+                logging.debug('Added subscan {0} to handled scan {2}.'
+                              .format(config.subscanNo, scan.scanId))
+
         # Set the antenna info if we have it
         if ds.ant is not None:
             config.set_ant(ds.ant)
 
         # Update the stop times of any queued scans that start
-        # before this one.  Does it ever make sense to update the
-        # already-handled scans?
+        # before this one.  This method will also update subscan
+        # stop time as appropriate.  If a subscan stop time was updated
+        # call handle_subscan again.
+        for scan in ds.handled:
+            if scan.update_stopTime(config.startTime):
+                handle_subscan(scan)
         for scan in ds.queued:
-            if ((scan.startTime < config.startTime) and
-                    ((scan.stopTime is None)
-                        or (scan.stopTime > config.startTime))):
-                scan.stopTime = config.startTime
+            scan.update_stopTime(config.startTime):
 
         # The end of an SB is marked by a special Observation document
         # with source name FINISH, and intent suppress_data=True.  Check
@@ -74,14 +92,18 @@ class Controller(object):
         # end-of-SB processing.
         is_finish = (config.source == 'FINISH')
 
-        # Add the new scan to the queue, unless it's a FINISH
-        if not is_finish:
+        # Add the new scan to the queue, unless it's a FINISH or subscan
+        if not is_finish and not is_subscan:
             ds.queued.append(config)
             logging.debug('Queued scan {0}, scan {1}.'
                           .format(config.scan_intent, config.scanId))
 
         # Handle any complete scans from queue
         self.clean_queue(ds)
+
+        # TODO handle any newly-completed subscans, need to figure out
+        # how to deal with this.. I think in principle these could be 
+        # part of either queued or handled scans.
 
         # If this was a finish scan, update the dataset stop time,
         # call handle_finish() for any cleanup/etc actions, and then
@@ -119,7 +141,7 @@ class Controller(object):
             ds.handled.append(scan)
             ds.queued.remove(scan)
 
-        # XXX for testing, remove:
+        # Log messages for debugging
         for s in ds.queued:
             logging.debug('Queued %s start=%.6f stop=%.6f' % (
                 s.scanId, s.startTime,
@@ -133,6 +155,12 @@ class Controller(object):
         # Implement in derived class.  This will be called with the
         # ScanConfig object as argument every time a scan with complete
         # metadata is received.
+        pass
+
+    def handle_subscan(self, config):
+        # Implement in derived class.  This will be called with the
+        # ScanConfig object as argument every time new subscan information
+        # has been added to a complete config.
         pass
 
     def handle_finish(self, dataset):
