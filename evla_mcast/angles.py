@@ -51,9 +51,9 @@ converting angles between various units, normalizing angles into a
 given range, finding separation and bearing bewteen two points and
 others. Normalization of angles can be performed in two different
 ways. One method normalizes angles in the manner that longitudinal
-angles are normalized i.e., [0, 360.0) or [0, 2π) or [0, 24.0). The
+angles are normalized i.e., [0, 360.0) or [0, 2pi) or [0, 24.0). The
 other method normalizes angles in the manner that latitudinal angles
-are normalized i.e., [-90, 90] or [-π/2, π/2].
+are normalized i.e., [-90, 90] or [-pi/2, pi2].
 
 See docstrings of classes and functions for documentation and examples.
 
@@ -250,7 +250,7 @@ def h2h(h):
 
 
 def r2r(r):
-    """Normalize angle in radians to [0, 2π)."""
+    """Normalize angle in radians to [0, 2pi)."""
     return normalize(r, 0, 2 * math.pi)
 
 
@@ -729,7 +729,7 @@ def phmsdms(hmsdms):
 def sep(a1, b1, a2, b2):
     """Angular spearation between two points on a unit sphere.
 
-    This will be an angle between [0, π] radians.
+    This will be an angle between [0, pi] radians.
 
     Parameters
     ----------
@@ -745,7 +745,7 @@ def sep(a1, b1, a2, b2):
     -----
     The great cicle angular separation of the second point from the
     first is returned as an angle in radians. the return value is
-    always in the range [0, π].
+    always in the range [0, pi].
 
     Results agree with those from SLALIB routine sla_dsep. See
     _test_with_slalib().
@@ -809,8 +809,8 @@ def bear(a1, b1, a2, b2):
     Position angle of the second point with respect to the first
     is returned in radians. Position angle is calculated clockwise
     and counter-clockwise from the direction towards the North
-    pole. It is between [0 and π] if the second point is in the
-    eastern hemisphere w.r.t the first, and between (0, -π) if
+    pole. It is between [0 and pi] if the second point is in the
+    eastern hemisphere w.r.t the first, and between (0, -pi) if
     the second point is in the western hemisphere w.r.t the first.
 
     .. warning::
@@ -1003,7 +1003,7 @@ class Angle(object):
 
     >>> a.s1 = u"\u00B0 "
     >>> print unicode(a)
-    +12° 34MM 16.593SS
+    +12 34MM 16.593SS
 
     The default unit is inferred from the input values.
 
@@ -1317,7 +1317,7 @@ class AlphaAngle(Angle):
 
     def _setnorm(self, val):
         # override method from Angle.
-        self._raw = r2r(val)  # [0, 2π) i.e., h = [0, 24).
+        self._raw = r2r(val)  # [0, 2pi) i.e., h = [0, 24).
 
     def __getounit(self):
         return self.__ounit

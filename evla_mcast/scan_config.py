@@ -66,6 +66,8 @@ class ScanConfig(object):
 
         self.requires = requires
 
+        self._subscans = []
+
         self.set_vci(vci)
         self.set_obs(obs)
         self.set_ant(ant)
@@ -97,7 +99,7 @@ class ScanConfig(object):
     def is_complete(self):
         if ('obs' in self.requires) and not self.has_obs:
             return False
-        if ('vci' in self.requires) and not self.has_obs:
+        if ('vci' in self.requires) and not self.has_vci:
             return False
         if ('ant' in self.requires) and not self.has_ant:
             return False
@@ -107,6 +109,8 @@ class ScanConfig(object):
 
     def set_vci(self, vci):
         self.vci = vci
+        for ss in self._subscans:
+            ss.set_vci(vci)
 
     def set_obs(self, obs):
         self.obs = obs
@@ -117,10 +121,59 @@ class ScanConfig(object):
 
     def set_ant(self, ant):
         self.ant = ant
-        # TODO parse antenna properties info here
-        # I suppose we need to read the antenna names from the VCI file
-        # and then derive the antenna properties from the antenna
-        # properties table?
+        for ss in self._subscans:
+            ss.set_ant(ant)
+
+    def is_subscan(self, config):
+        # Return true if config appears to be a subscan in the same set as
+        # this one.
+        return (
+                (self.datasetId == config.datasetId) and
+                (self.configId == config.configId) and
+                (self.scanNo == config.scanNo) and
+                (self.subscanNo != config.subscanNo)
+                )
+
+    def add_subscan(self, obs):
+        subconf = ScanConfig(obs=obs,vci=self.vci,ant=self.ant)
+
+        # TODO other stuff that could go here:
+        #  - check that subscan properties are consistent with main scan?
+
+        self.update_stopTime(subconf.startTime)
+
+        # Add new subscan to the list
+        self._subscans.append(subconf)
+
+    def update_stopTime(self, stopTime):
+        # Fill in any missing stop time info both for this scan and all
+        # subscans
+        was_updated = False
+        for ss in self.subscans:
+            if ((ss.startTime < stopTime) and
+                    ((ss.stopTime is None)
+                        or (ss.stopTime > stopTime))):
+                ss.stopTime = stopTime
+                was_updated = True
+        return was_updated
+
+    @property
+    def nsubscan(self):
+        return 1 + len(self._subscans)
+
+    @property
+    def subscans(self):
+        # List of all subscans (including first subscan)
+        return [self,] + self._subscans
+
+    def subscan(self,subscanNo):
+        # Get a specific subscan, by number
+        if subscanNo==self.subscanNo: 
+            return self
+        for sc in self._subscans:
+            if subscanNo==sc.subscanNo:
+                return sc
+        return None
 
     @staticmethod
     def parse_intents(intents):
@@ -171,6 +224,26 @@ class ScanConfig(object):
     @property
     def scan_intent(self):
         return self.get_intent("ScanIntent", "None")
+
+    @property
+    def otf(self):
+        return self.get_intent("OTF","0") == "1"
+
+    @property
+    def otf_rate_ra(self):
+        return float(self.get_intent("AntennaRaRate","0").strip('"'))
+
+    @property
+    def otf_rate_dec(self):
+        return float(self.get_intent("AntennaDecRate","0").strip('"'))
+
+    @property
+    def otf_duration(self):
+        return float(self.get_intent("DurationOfStripe","0").strip('"'))
+
+    @property
+    def otf_source_field(self):
+        return self.get_intent("SourceFieldSet","None").strip('"')
 
     @property
     def nchan(self):
