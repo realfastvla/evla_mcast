@@ -83,7 +83,7 @@ class Controller(object):
             if scan.update_stopTime(config.startTime):
                 handle_subscan(scan)
         for scan in ds.queued:
-            scan.update_stopTime(config.startTime):
+            scan.update_stopTime(config.startTime)
 
         # The end of an SB is marked by a special Observation document
         # with source name FINISH, and intent suppress_data=True.  Check
