@@ -444,9 +444,9 @@ class ScanConfig(object):
         if not self.is_complete():
             raise RuntimeError("Complete configuration not available: "
                                "has_vci={0}, has_obs={1}, has_ant={2}, "
-                               "stoptime={3}"
+                               "stopTime={3}"
                                .format(self.has_vci, self.has_obs,
-                                self.has_ant, self.stoptime))
+                                       self.has_ant, self.stopTime))
 
         subs = []
 

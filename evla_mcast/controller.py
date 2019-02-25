@@ -60,7 +60,7 @@ class Controller(object):
             if scan.is_subscan(config):
                 is_subscan = True
                 scan.add_subscan(obs)
-                logging.debug('Added subscan {0} to queued scan {2}.'
+                logging.debug('Added subscan {0} to queued scan {1}.'
                               .format(config.subscanNo, scan.scanId))
         for scan in ds.handled:
             if scan.is_subscan(config):
@@ -68,7 +68,7 @@ class Controller(object):
                 scan.add_subscan(obs)
                 # If the scan is already complete, also handle subscan
                 self.handle_subscan(scan)
-                logging.debug('Added subscan {0} to handled scan {2}.'
+                logging.debug('Added subscan {0} to handled scan {1}.'
                               .format(config.subscanNo, scan.scanId))
 
         # Set the antenna info if we have it
@@ -81,7 +81,7 @@ class Controller(object):
         # call handle_subscan again.
         for scan in ds.handled:
             if scan.update_stopTime(config.startTime):
-                handle_subscan(scan)
+                self.handle_subscan(scan)
         for scan in ds.queued:
             scan.update_stopTime(config.startTime)
 
