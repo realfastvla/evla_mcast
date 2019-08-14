@@ -36,6 +36,7 @@ class Controller(object):
 
     def run(self):
         try:
+            logging.info('Starting controller...')
             asyncore.loop()
         except KeyboardInterrupt:
             logging.info('Exiting controller...')
