@@ -3,11 +3,13 @@ from builtins import bytes, dict, object, range, map, input, str
 from future.utils import itervalues, viewitems, iteritems, listvalues, listitems
 from io import open
 
-import logging
 import asyncore
 
 from . import mcast_clients
 from .scan_config import ScanConfig
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 class Dataset(object):
