@@ -5,11 +5,55 @@
       Author:	Sonja.Vrcic@nrc.gc.ca
       Copyright:  National Research Council of Canada and Associated Universities Inc., 2010, 2011, 2012, 2013
       Version of the protocol: As specified in the VCI Protocol Specification, Widar Document A25201N0000 Revision 3.16, 
+       $Date: 2017-06-27 10:48:22 -0600 (Tue, 27 Jun 2017) $
+      $Revision: 7068 $
+
       V3.16 - attributes and elements related to phase binning.
       Description: XML Schema - Elements and type defintions used in VCI messages.
-      $Date: 2015-06-10 14:49:27 -0600 (Wed, 10 Jun 2015) $
-      $Revision: 6764 $
-  -->
+
+      V3.17 - Changed slope and lag0 attributes from decimal to double in vciStbBbSlopeTable.xsd
+      r6502 | rmoeser | 2014-01-16 16:42:00 -0700 (Thu, 16 Jan 2014) | 2 lines
+
+      v3.18 - Frequency Averaging Change adds the ability to specify CBE pipeline
+      processing via the VCI. A new VciRequest element was created called
+      'cbeProcessing' that allows specifying the integration order (which
+      was originally hardcoded in the SubarrayCbeConfig class constructor):
+      'integrateFirst', 'transformFirst' or 'noTransform' as well as specifying
+      two new functions: 'averageFrequency' and 'window'.
+      r6925 | kryan | 2016-05-19 11:43:28 -0600 (Thu, 19 May 2016) | 4 lines
+
+      v3.18.1 - For SpectChannelsType element changed
+      minInclusive from 64 to 32 as follows:
+      At Ken's request, made this multiples of 32
+      to support the so-called  'half-lag' option whereby each
+      transmitted lag frame has 32 lags/leads instead of 64.
+      r6750 | kryan | 2015-05-26 13:57:57 -0600 (Tue, 26 May 2015) | 12 lines
+
+      v3.19 - Added sequenceNum to vciStbDelayModel.xsd
+      r6784 | kryan | 2015-07-23 09:48:30 -0600 (Thu, 23 Jul 2015) | 5 lines
+
+      v3.20 - Changed baseband->binningPeriod attribute from float to double.
+      r6929 | kryan | 2016-06-09 12:03:32 -0600 (Thu, 09 Jun 2016) | 3 lines
+      
+      v3.20.1 - phase binning changes
+      Change binning stuff from floats to doubles.
+      Changed binWidth from 'required' to 'optional'.
+
+      v3.21 - Pulsar Phase Binning Mode
+      Added new phaseBinModel element to baseBand element
+
+      v3.21.1 - Pulsar Phase Binning Mode
+      Changed the way the new phaseBinModel element was declared from being
+      inline (name='phaseBinModel') to referenced (ref='phaseBinModel') for
+      compatibility with how the other elements are defined.
+
+      v3.22 - CBE Visibilities Stream Switch & Summed Array AGC Control
+      VYS - Added attributes disableVysStream to subArray and cbeProcessing
+            elements.
+      AGC - Added attributes agcMode, window and agcDelay to vdif element.
+            Added attributes centerFreqInSubband and fringRotateInFilterChip
+	    to the subband element.
+-->
   <!--
       Includes WidarCommon.xsd 
   -->
@@ -42,6 +86,13 @@
       <xs:enumeration value="3.17"/>
       <xs:enumeration value="3.18"/>
       <xs:enumeration value="3.18.1"/>
+      <xs:enumeration value="3.19"/>
+      <xs:enumeration value="3.20"/>
+      <xs:enumeration value="3.20.1"/>
+      <xs:enumeration value="3.21"/>
+      <xs:enumeration value="3.21.1"/>
+      <xs:enumeration value="3.22"/>
+      
       <!--
          -              N   O   T   E                       -
 	 -                                                  -
@@ -60,7 +111,16 @@
     <xs:attribute name="msgId" type="xs:int"    use="required"/>
     <xs:attribute name="desc"  type="xs:string" use="optional"/>
     <xs:attribute name="timeStamp" type="xs:dateTime" use="optional"/>
-    <xs:attribute name="version" default="3.18.1" type="widar:VciProtocolVersionType" use="optional"/>
+    <!--
+       - kjr-2017.04.05
+       -
+       - At system startup, the VciConfigMapper constructor reads
+       - this attribute which is used as the name of a directory
+       - at /home/asg/www/widar/schemata/vci that contains the
+       - vci .xsd files that are used to validate VCI documents
+       - at runtime.
+       -->
+    <xs:attribute name="version" default="3.22" type="widar:VciProtocolVersionType" use="optional"/>
   </xs:attributeGroup>
   <xs:element name="antenna">
     <xs:annotation>

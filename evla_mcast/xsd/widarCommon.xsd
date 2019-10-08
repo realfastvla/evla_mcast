@@ -8,8 +8,8 @@
       Description: Elements and type defintions for the WIDAR Correlator Schemata.
       2015.04.12 Updated by KRyan: changed minInclusive of SpectChannelsType from 64 to 32.
       Version of the protocol: DRAO Document: VCI Protocol Specification, A25201N0000, Revision 3.15, 
-      $Date: 2015-05-26 13:57:57 -0600 (Tue, 26 May 2015) $
-      $Revision: 6750 $
+      $Date: 2017-05-02 11:59:10 -0600 (Tue, 02 May 2017) $
+      $Revision: 7031 $
     </xs:documentation>
   </xs:annotation>
   <xs:element name="component">
@@ -369,7 +369,7 @@
       <xs:documentation>
 	Number of spectral channels per product (for "narrow band" correlation on the Baseline Board).
 	Must be multiple of 64, i.e. 64*n, n=1,2,3,etc.
-	2015.05.26--kjr At Ken's request, made this multiples of 32 to support the so-called
+	2015.05.26--kjr At Ken's request, made this to accept 32 to support the so-called
 	            'half-lag' option whereby each transmitted lag frame has 32 lags/leads 
 		    instead of 64.  This allows a bit more performance in the case when we want
 		    very fast dumps and 4 Mhz channel widths are acceptable.  It addresses
@@ -983,7 +983,9 @@
 	Used to specify phase and bin width for phased binning.
       </xs:documentation>
     </xs:annotation>
-    <xs:restriction base="xs:float">
+
+    <!-- kjr-2017.03.28 Change binning stuff from floats to doubles. --> 
+    <xs:restriction base="xs:double">
       <xs:minInclusive value="0.0"/>
       <xs:maxInclusive value="1.0"/>
     </xs:restriction>

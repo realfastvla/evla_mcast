@@ -70,6 +70,11 @@ XML Namespace is not defined in this version.
       </xs:sequence>
       <xs:attribute name="epoch" type="xs:dateTime" use="required"/>
       <xs:attribute name="t0" type="xs:double" use="optional"/>
+      <xs:attribute name="sequenceNum" type="xs:int" use="optional">
+	<xs:annotation>
+	  <xs:documentation>optional sequence number for debugging purposes</xs:documentation>
+	</xs:annotation>
+      </xs:attribute>
       <xs:attribute name="idString" type="xs:string">
 	<xs:annotation>
 	  <xs:documentation>optional identifier string for debugging purposes</xs:documentation>
