@@ -432,7 +432,9 @@
 			<xs:attribute name="swIndex" type="xs:int" use="required"/>
 			<xs:attribute name="name" type="xs:string" use="optional"/>
 			<xs:attribute name="bw" type="widar:SbBwType" use="required"/>
-			<xs:attribute name="centralFreq" type="xs:decimal" use="required"/>
+			<!--NOTE this is to work around large numbers of zeros breaking some parsers. PBD -->
+			<!--<xs:attribute name="centralFreq" type="xs:decimal" use="required"/>-->
+			<xs:attribute name="centralFreq" type="xs:string" use="required"/>
 			<xs:attribute name="rqNumBits" type="widar:BitsForReQuantizationType" use="required"/>
 			<xs:attribute name="useMixer" type="widar:YesNoType" use="optional">
 				<xs:annotation>
