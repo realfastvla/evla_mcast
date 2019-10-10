@@ -13,7 +13,7 @@ import contextlib
 from lxml import etree, objectify
 
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('mcast_clients')
 
 _install_dir = os.path.abspath(os.path.dirname(__file__))
 _xsd_dir = os.path.join(_install_dir, 'xsd')
